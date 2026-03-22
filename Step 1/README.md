@@ -10,31 +10,30 @@
 
 ## איפיון מסכים (Google AI Studio)
 הגדרנו 4 מסכים מרכזיים עבור המערכת:
-1. מסך ניהול מלאי סניפי.
-2. מסך ניהול עובדים ושיבוץ.
-3. דשבורד מכירות ומבצעים.
-4. מסך הזמנות רכש מספקים.
+1. לוח בקרה רשתי.
+2. ניהול סניפים.
+3. מלאי רשתי.
+4. ספקים.
+5. ניהול עובדים.
 
 [לינק לאפליקציה ב-AI Studio](https://ai.studio/apps/954fde94-4343-4ac8-abde-e5b1d80ae363)
 
-![מסכי AI Studio]
+![לוח בקרה רשתי](./Step%201/images/image1.png)
 
-(./Step%201/images/images1.png)
+![ניהול סניפים](./Step%201/images/image2.png)
 
-(./Step%201/images/image2.png)
+![מלאי רשתי](./Step%201/images/image3.png)
 
-(./Step%201/images/image3.png)
+![ספקים](./Step%201/images/image4.png)
 
-(./Step%201/images/image4.png)
-
-(./Step%201/images/image5.png)
+![ניהול עובדים](./Step%201/images/image5.png)
 
 ## עיצוב בסיס הנתונים
 בסיס הנתונים כולל 10 ישויות (מעל המינימום הנדרש של 6).
 
 ### תרשימי עיצוב
-- **תרשים ERD:** [לינק או תמונה](./Step%201/images/ERD.png)
-- **תרשים DSD:** [לינק או תמונה](./Step%201/images/dsd.png)
+- **תרשים ERD:** ![דיאגרמת ERD](./Step%201/images/ERD.png)
+- **תרשים DSD:** ![דיארמת DSD](./Step%201/images/dsd.png)
 
 ### החלטות עיצוב ושימוש בטיפוסי נתונים
 כפי שנדרש, ביצענו התאמות לסוגי הנתונים:
