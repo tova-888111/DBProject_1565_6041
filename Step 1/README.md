@@ -18,22 +18,22 @@
 
 [לינק לאפליקציה ב-AI Studio](https://ai.studio/apps/954fde94-4343-4ac8-abde-e5b1d80ae363)
 
-![לוח בקרה רשתי](./Step%201/images/image1.png)
+![לוח בקרה רשתי](images/image1.png)
 
-![ניהול סניפים](./Step%201/images/image2.png)
+![ניהול סניפים](images/image2.png)
 
-![מלאי רשתי](./Step%201/images/image3.png)
+![מלאי רשתי](images/image3.png)
 
-![ספקים](./Step%201/images/image4.png)
+![ספקים](images/image4.png)
 
-![ניהול עובדים](./Step%201/images/image5.png)
+![ניהול עובדים](images/image5.png)
 
 ## עיצוב בסיס הנתונים
 בסיס הנתונים כולל 10 ישויות (מעל המינימום הנדרש של 6).
 
 ### תרשימי עיצוב
-- **תרשים ERD:** ![דיאגרמת ERD](./Step%201/images/ERD.png)
-- **תרשים DSD:** ![דיארמת DSD](./Step%201/images/dsd.png)
+- **תרשים ERD:** ![דיאגרמת ERD](images/ERD.png)
+- **תרשים DSD:** ![דיארמת DSD](images/dsd.png)
 
 ### החלטות עיצוב ושימוש בטיפוסי נתונים
 כפי שנדרש, ביצענו התאמות לסוגי הנתונים:
