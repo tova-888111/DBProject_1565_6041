@@ -13,7 +13,11 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./init-db:/docker-entrypoint-initdb.d
+      # מיפוי קובץ היצירה - ניתן לו מספר 01 כדי שירוץ ראשון
+      - ./"Step 1"/createTables.sql:/docker-entrypoint-initdb.d/01_createTables.sql
+      # מיפוי קובץ הכנסת הנתונים - ניתן לו מספר 02 כדי שירוץ שני
+      - ./"Step 1"/insertTables.sql:/docker-entrypoint-initdb.d/02_insertTables.sql
+      # שמירת הנתונים
       - postgres_data:/var/lib/postgresql
     networks:
       - ramilevi_network
