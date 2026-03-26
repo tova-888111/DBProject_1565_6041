@@ -40,7 +40,7 @@ CREATE TABLE EMPLOYEE
 CREATE TABLE CATEGORY
 (
   CategoryID INT NOT NULL,
-  CategoryName VARCHAR(50) NOT NULL,
+  CategoryName VARCHAR(100) NOT NULL,
   IsActive INT NOT NULL, -- 1 לכן, 0 ללא
   PRIMARY KEY (CategoryID)
 );
