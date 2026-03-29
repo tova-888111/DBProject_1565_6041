@@ -24,6 +24,7 @@ services:
       - ./Step 1/09_insert_inventory_python.sql:/docker-entrypoint-initdb.d/09_insert_inventory_python.sql
       - ./Step 1/10_insert_suppliered_by_python.sql:/docker-entrypoint-initdb.d/10_insert_suppliered_by_python.sql
       - ./Step 1/11_insert_applies_to_python.sql:/docker-entrypoint-initdb.d/11_insert_applies_to_python.sql
+      - ./Step 1/12_select_All.sql:/docker-entrypoint-initdb.d/12_select_All.sql
       - postgres_data:/var/lib/postgresql
     networks:
       - ramilevi_network

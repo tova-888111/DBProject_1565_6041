@@ -1,11 +1,11 @@
 INSERT INTO STORE (StoreID, StoreName, Phone, StoreEmail, Rating)
-
-SELECT
+SELECT 
     store_num AS StoreID,
-
-    'Rami Levy ' ||
-    areas[((store_num - 1) / 10) + 1] ||
-    ' Branch ' || ((store_num - 1) % 10 + 1)
+    
+    -- שינוי הלוגיקה: בחירת עיר לפי שארית החלוקה במספר הערים (50)
+    'Rami Levy ' || 
+    areas[((store_num - 1) % 50) + 1] || 
+    ' Branch ' || ((store_num - 1) / 50 + 1)
     AS StoreName,
 
     '05-' || LPAD((1000000 + store_num)::text, 7, '0')
