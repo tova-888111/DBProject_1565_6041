@@ -40,10 +40,16 @@
 * **Constraints (אילוצים):** הוספנו אילוצי `NOT NULL` להבטחת שלמות הנתונים ומפתחות זרים (`FOREIGN KEY`) לקישור בין הישויות.
 
 ### ⚖️ נורמליזציה (3NF)
+
 הסכימה מנורמלת לרמה של **3NF** (צורה נורמלית שלישית):
+
 * **1NF:** כל השדות אטומיים ואין קבוצות חוזרות.
 * **2NF:** כל השדות שאינם מפתח תלויים באופן מלא במפתח הראשי.
-* **3NF:** **ביטול תלויות טרנזיטיביות.** לדוגמה: פרטי המיקום (עיר, רחוב) הוצאו לטבלת `LOCATION` נפרדת המקושרת ל-`STORE`. כך, שינוי בפרטי עיר לא מצריך עדכון בכל שורת סניף, מה שמונע כפילות ובעיות עדכון (Update Anomalies).
+* **3NF:** **ביטול תלויות טרנזיטיביות.**
+
+לדוגמה: פרטי המיקום (עיר, רחוב) הוצאו לטבלה נפרדת `LOCATION` המקושרת ל־`STORE`.
+כך, שינוי בפרטי עיר לא מצריך עדכון בכל שורת סניף, מה שמונע כפילויות ובעיות עדכון (*Update Anomalies*).
+
 
 ---
 
@@ -111,15 +117,15 @@ docker-compose down -v
 ```bash
 cat backup_29_03_2026.sql | docker exec -i PostgreSQL_DB psql -U tova -d ramileviDB
 ```
-![Return](images/backup4.png)
+![Return 1](images/backup5.png)
+![Return 2](images/backup6.png)
 ---
 
 **אימות:**
 
 בדיקה באמצעות pgAdmin שהטבלאות והנתונים שוחזרו במלואם:
 
-![Validation 1](images/backup5.png)
-![Validation 2](images/backup6.png)
+![Validation](images/backup4.png)
 
 ---
 
