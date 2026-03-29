@@ -63,9 +63,6 @@
 ### ✍️ שיטה ידנית (Manual Insert)
 הכנסנו נתונים באופן ידני עבור טבלאות הליבה: `STORE` ו-`CATEGORY`.
 
-![STORE](images/store.png)
-![CATEGORY](images/category.png)
-
 ### 🌐 אתרים חיצוניים (Mockaroo)
 השתמשנו באתר **Mockaroo** ליצירת נתונים מאסיביים (מעל 20,000 רשומות) עבור הטבלאות: `SUPPLIER` ו-`LOCATION`.
 
@@ -75,49 +72,61 @@
 ---
 
 ## 4. 💾 גיבוי ושחזור (Backup & Restore)
+
 ביצענו תהליך גיבוי מלא כדי להבטיח את שרידות הנתונים.
 
 ### 📤 שלבי הגיבוי
-יצירת הגיבוי באמצעות כלי `pg_dump` בתוך ה-Docker ליצירת קובץ SQL חיצוני:
+
+**יצירת הגיבוי:**
+
+שימוש בכלי `pg_dump` בתוך ה־Docker ליצירת קובץ SQL חיצוני:
+
 ```bash
 docker exec -t PostgreSQL_DB pg_dump -U tova ramileviDB > backup_29_03_2026.sql
-4. גיבוי ושחזור (Backup & Restore)
-ביצענו תהליך גיבוי מלא כדי להבטיח את שרידות הנתונים.
+```
 
-שלבי הגיבוי:
-יצירת הגיבוי: שימוש בכלי pg_dump בתוך ה-Docker ליצירת קובץ SQL חיצוני.
+![Backup Step 1](images/backup1.png)
+![Backup Step 2](images/backup2.png)
 
-docker exec -t PostgreSQL_DB pg_dump -U tova ramileviDB > backup_29_03_2026.sql
+---
 
-![](images/backup1.png)
+### 📥 שלבי השחזור (בדיקה על סביבה נקייה)
 
-![](images/backup2.png)
+**ניקוי:**
 
-שלבי השחזור (בדיקה על סביבה נקייה):
-ניקוי: הרצת docker-compose down -v למחיקת הנתונים הקיימים.
+מחיקת הנתונים הקיימים באמצעות:
 
-![](images/backup3.png)
+```bash
+docker-compose down -v
+```
 
-שחזור: הזרקת הקובץ חזרה לקונטיינר חדש וריק:
+![Cleanup](images/backup3.png)
 
+---
+
+**שחזור:**
+
+הזרקת קובץ הגיבוי לקונטיינר חדש וריק:
+
+```bash
 cat backup_29_03_2026.sql | docker exec -i PostgreSQL_DB psql -U tova -d ramileviDB
+```
 
-אימות: בדיקה ב-pgAdmin שהטבלאות והנתונים שוחזרו במלואם.
+---
 
-![](images/backup5.png)
+**אימות:**
 
-![](images/backup6.png)
+בדיקה באמצעות pgAdmin שהטבלאות והנתונים שוחזרו במלואם:
 
-5. קבצי הגשה - שלב א'
-01_createTables.sql - יצירת מבנה הטבלאות.
+![Validation 1](images/backup5.png)
+![Validation 2](images/backup6.png)
 
-dropTables.sql - מחיקת הטבלאות.
+---
 
-X_insertTables.sql - פקודות הכנסת הנתונים.
-כאשר הקבצים ממוספרים מ2 עד 11 עבור כל טבלה בנפרד, על מנת שיהיה קל לעקוב
+## 5. 📁 קבצי הגשה - שלב א'
 
-12_selectAll.sql - שאילתות בדיקה.
-
-backup_26_03_2026.sql - קובץ הגיבוי הסופי.
-
-
+* **01_createTables.sql** – יצירת מבנה הטבלאות
+* **dropTables.sql** – מחיקת הטבלאות
+* **X_insertTables.sql** – פקודות הכנסת נתונים (ממוספרים מ־2 עד 11, קובץ לכל טבלה)
+* **12_selectAll.sql** – שאילתות בדיקה
+* **backup_26_03_2026.sql** – קובץ הגיבוי הסופי
