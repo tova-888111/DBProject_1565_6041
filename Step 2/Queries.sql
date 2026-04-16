@@ -235,20 +235,28 @@ ORDER BY s.StoreID;
 
 
 -- =========================================================
--- SELECT 8 - Dashboard / Discounts
--- הנחות פעילות בתאריך מסוים עם המוצרים שהן חלות עליהם
+-- SELECT 8 - Discounts Management Screen
+-- כל ההנחות שהוגדרו ברשת והמוצרים המשויכים אליהן
+-- כולל פירוק תאריכים לימים, חודשים ושנים (לפי דרישות שלב ב')
 -- =========================================================
 SELECT 
     d.DiscountID,
     d.DiscountName,
     d.DiscountPercentage,
     p.ProductID,
-    p.ProductName
+    p.ProductName,
+    -- פירוק תאריך התחלה לניהול נוח ב-GUI
+    EXTRACT(DAY FROM d.StartDate) AS StartDay,
+    EXTRACT(MONTH FROM d.StartDate) AS StartMonth,
+    EXTRACT(YEAR FROM d.StartDate) AS StartYear,
+    -- פירוק תאריך סיום לניהול נוח ב-GUI
+    EXTRACT(DAY FROM d.EndDate) AS EndDay,
+    EXTRACT(MONTH FROM d.EndDate) AS EndMonth,
+    EXTRACT(YEAR FROM d.EndDate) AS EndYear
 FROM DISCOUNT d
 JOIN APPLIES_TO a ON d.DiscountID = a.DiscountID
 JOIN PRODUCT p ON a.ProductID = p.ProductID
-WHERE DATE '2026-04-16' BETWEEN d.StartDate AND d.EndDate
-ORDER BY d.DiscountID, p.ProductID;
+ORDER BY d.StartDate DESC, d.DiscountID;
 
 
 -- =========================================================
@@ -321,7 +329,7 @@ ORDER BY s.StoreID;
 SELECT *
 FROM DISCOUNT
 WHERE DATE '2026-04-16' BETWEEN StartDate AND EndDate
-  AND DiscountPercentage < 20
+  AND DiscountPercentage < 25
 ORDER BY DiscountID;
 
 UPDATE DISCOUNT
@@ -338,7 +346,7 @@ ORDER BY DiscountID;
 
 -- =========================================================
 -- DELETE 1 - Inventory screen
--- מחיקת רשומת מלאי אחת של מוצר שאזל מהמלאי וגם פג תוקפו
+-- מחיקת רשומה אחת מטבלת המלאי שמתאימה לזוג מפתחות ספציפים
 -- =========================================================
 SELECT 
     i.StoreID,
