@@ -143,7 +143,6 @@ SELECT
     e.FirstName,
     e.LastName,
     e.Role,
-    e.Status,
     e.Salary,
     s.StoreName
 FROM EMPLOYEE e
@@ -163,7 +162,6 @@ SELECT
     e.FirstName,
     e.LastName,
     e.Role,
-    e.Status,
     e.Salary,
     (
         SELECT s.StoreName
@@ -182,18 +180,35 @@ ORDER BY e.EmployeeID;
 
 
 -- =========================================================
--- SELECT 5 - Branches screen
--- פרטי סניפים + מספר מוצרים בסניף + מספר פריטי מלאי נמוך
+-- SELECT 5 - Detailed Branches Dashboard
+-- פרטי סניפים מלאים: כתובת, מנהל, מלאי וכמות עובדים
 -- =========================================================
 SELECT 
     s.StoreID,
     s.StoreName,
-    s.Rating,
-    COUNT(i.ProductID) AS NumProductsInStore,
-    SUM(CASE WHEN i.Quantity < i.MinimumStock THEN 1 ELSE 0 END) AS LowStockItems
+    -- כתובת הסניף
+    COALESCE(l.City || ', ' || l.Street || ' ' || l.StreetNumber::TEXT, 'No Address') AS StoreAddress,
+    -- פרטי מנהל
+    COALESCE(e_mgr.EmployeeID::TEXT, 'None') AS ManagerID,
+    COALESCE(e_mgr.FirstName || ' ' || e_mgr.LastName, 'None') AS ManagerName,
+    -- נתוני מלאי
+    COUNT(DISTINCT i.ProductID) AS NumProductsInStore,
+    SUM(CASE WHEN i.Quantity < i.MinimumStock THEN 1 ELSE 0 END) AS LowStockItems,
+    -- מספר עובדים בסניף
+    (SELECT COUNT(*) FROM EMPLOYEE e WHERE e.StoreID = s.StoreID) AS TotalEmployees
 FROM STORE s
+LEFT JOIN LOCATION l ON s.StoreID = l.StoreID
+LEFT JOIN EMPLOYEE e_mgr ON s.StoreID = e_mgr.StoreID AND e_mgr.Role = 'Store Manager'
 LEFT JOIN INVENTORY i ON s.StoreID = i.StoreID
-GROUP BY s.StoreID, s.StoreName, s.Rating
+GROUP BY 
+    s.StoreID, 
+    s.StoreName, 
+    l.City, 
+    l.Street, 
+    l.StreetNumber,
+    e_mgr.EmployeeID, 
+    e_mgr.FirstName, 
+    e_mgr.LastName
 ORDER BY s.StoreID;
 
 
@@ -219,19 +234,16 @@ JOIN STORE s ON i.StoreID = s.StoreID
 JOIN CATEGORY c ON p.CategoryID = c.CategoryID
 ORDER BY p.ProductID, s.StoreID;
 
-
 -- =========================================================
--- SELECT 7 - Dashboard
--- מספר מוצרים בכל סניף
+-- SELECT 7 - Network Totals Dashboard
+-- סכימה כללית של עובדים, מוצרים ומלאי חסר ברמת הרשת
 -- =========================================================
 SELECT 
-    s.StoreID,
-    s.StoreName,
-    COUNT(i.ProductID) AS NumProducts
-FROM STORE s
-LEFT JOIN INVENTORY i ON s.StoreID = i.StoreID
-GROUP BY s.StoreID, s.StoreName
-ORDER BY s.StoreID;
+    (SELECT COUNT(*) FROM EMPLOYEE) AS TotalEmployees,
+    (SELECT COUNT(*) FROM PRODUCT) AS ProductTypes,
+    (SELECT SUM(Quantity) FROM INVENTORY) AS OverallStock,
+    (SELECT COUNT(*) FROM INVENTORY WHERE Quantity < MinimumStock) AS LowStockPoints
+FROM (SELECT 1) AS dummy;
 
 
 -- =========================================================
