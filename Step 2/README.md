@@ -18,9 +18,40 @@
 
 **גרסה 1:**
 
+SELECT 
+    p.ProductID,
+    p.ProductName,
+    s.StoreID,
+    s.StoreName,
+    i.Quantity,
+    i.MinimumStock
+FROM INVENTORY i
+JOIN PRODUCT p ON i.ProductID = p.ProductID
+JOIN STORE s ON i.StoreID = s.StoreID
+WHERE i.Quantity < i.MinimumStock
+ORDER BY p.ProductID, s.StoreID;
+
 ![הרצת גרסה 1](images/selectQuery1_1.png)
 
 **גרסה 2:**
+
+SELECT 
+    p.ProductID,
+    p.ProductName,
+    s.StoreID,
+    s.StoreName,
+    i.Quantity,
+    i.MinimumStock
+FROM INVENTORY i
+JOIN PRODUCT p ON i.ProductID = p.ProductID
+JOIN STORE s ON i.StoreID = s.StoreID
+WHERE (i.StoreID, i.ProductID) IN
+(
+    SELECT StoreID, ProductID
+    FROM INVENTORY
+    WHERE Quantity < MinimumStock
+)
+ORDER BY p.ProductID, s.StoreID;
 
 ![הרצת גרסה 2](images/selectQuery1_2.png)
 
@@ -38,9 +69,36 @@
 
 **גרסה 1:**
 
+SELECT 
+    p.ProductID,
+    p.ProductName,
+    c.CategoryName,
+    p.Price,
+    p.ExpirationDate
+FROM PRODUCT p
+JOIN CATEGORY c ON p.CategoryID = c.CategoryID
+WHERE p.ExpirationDate BETWEEN DATE '2026-04-16' AND DATE '2026-05-16'
+ORDER BY p.ExpirationDate, p.ProductID;
+
 ![הרצת גרסה 1](images/selectQuery2_1.png)
 
 **גרסה 2:**
+
+SELECT 
+    p.ProductID,
+    p.ProductName,
+    c.CategoryName,
+    p.Price,
+    p.ExpirationDate
+FROM PRODUCT p
+JOIN CATEGORY c ON p.CategoryID = c.CategoryID
+WHERE p.ProductID IN
+(
+    SELECT ProductID
+    FROM PRODUCT
+    WHERE ExpirationDate BETWEEN DATE '2026-04-16' AND DATE '2026-05-16'
+)
+ORDER BY p.ExpirationDate, p.ProductID;
 
 ![הרצת גרסה 2](images/selectQuery2_2.png)
 
@@ -58,9 +116,39 @@
 
 **גרסה 1:**
 
+SELECT 
+    s.SupplierID,
+    s.SupplierName,
+    s.Email,
+    s.ContactPhone,
+    COUNT(sb.ProductID) AS NumProductsSupplied
+FROM SUPPLIER s
+JOIN SUPPLIERED_BY sb ON s.SupplierID = sb.SupplierID
+GROUP BY s.SupplierID, s.SupplierName, s.Email, s.ContactPhone
+ORDER BY s.SupplierID;
+
 ![הרצת גרסה 1](images/selectQuery3_1.png)
 
 **גרסה 2:**
+
+SELECT 
+    s.SupplierID,
+    s.SupplierName,
+    s.Email,
+    s.ContactPhone,
+    (
+        SELECT COUNT(*)
+        FROM SUPPLIERED_BY sb
+        WHERE sb.SupplierID = s.SupplierID
+    ) AS NumProductsSupplied
+FROM SUPPLIER s
+WHERE EXISTS
+(
+    SELECT 1
+    FROM SUPPLIERED_BY sb
+    WHERE sb.SupplierID = s.SupplierID
+)
+ORDER BY s.SupplierID;
 
 ![הרצת גרסה 2](images/selectQuery3_2.png)
 
@@ -78,9 +166,42 @@
 
 **גרסה 1:**
 
+SELECT 
+    e.EmployeeID,
+    e.FirstName,
+    e.LastName,
+    e.Role,
+    e.Salary,
+    s.StoreName
+FROM EMPLOYEE e
+JOIN STORE s ON e.StoreID = s.StoreID
+WHERE e.Status = 'Active'
+ORDER BY e.EmployeeID;
+
 ![הרצת גרסה 1](images/selectQuery4_1.png)
 
 **גרסה 2:**
+
+SELECT 
+    e.EmployeeID,
+    e.FirstName,
+    e.LastName,
+    e.Role,
+    e.Salary,
+    (
+        SELECT s.StoreName
+        FROM STORE s
+        WHERE s.StoreID = e.StoreID
+    ) AS StoreName
+FROM EMPLOYEE e
+WHERE e.Status = 'Active'
+  AND EXISTS
+  (
+      SELECT 1
+      FROM STORE s
+      WHERE s.StoreID = e.StoreID
+  )
+ORDER BY e.EmployeeID;
 
 ![הרצת גרסה 2](images/selectQuery4_2.png)
 
@@ -101,6 +222,34 @@
 
 המידע מסייע בניהול סניפים והשוואה ביניהם.
 
+SELECT 
+    s.StoreID,
+    s.StoreName,
+    -- כתובת הסניף
+    COALESCE(l.City || ', ' || l.Street || ' ' || l.StreetNumber::TEXT, 'No Address') AS StoreAddress,
+    -- פרטי מנהל
+    COALESCE(e_mgr.EmployeeID::TEXT, 'None') AS ManagerID,
+    COALESCE(e_mgr.FirstName || ' ' || e_mgr.LastName, 'None') AS ManagerName,
+    -- נתוני מלאי
+    COUNT(DISTINCT i.ProductID) AS NumProductsInStore,
+    SUM(CASE WHEN i.Quantity < i.MinimumStock THEN 1 ELSE 0 END) AS LowStockItems,
+    -- מספר עובדים בסניף
+    (SELECT COUNT(*) FROM EMPLOYEE e WHERE e.StoreID = s.StoreID) AS TotalEmployees
+FROM STORE s
+LEFT JOIN LOCATION l ON s.StoreID = l.StoreID
+LEFT JOIN EMPLOYEE e_mgr ON s.StoreID = e_mgr.StoreID AND e_mgr.Role = 'Store Manager'
+LEFT JOIN INVENTORY i ON s.StoreID = i.StoreID
+GROUP BY 
+    s.StoreID, 
+    s.StoreName, 
+    l.City, 
+    l.Street, 
+    l.StreetNumber,
+    e_mgr.EmployeeID, 
+    e_mgr.FirstName, 
+    e_mgr.LastName
+ORDER BY s.StoreID;
+
 ![שאילתה 5](images/selectQuery5.png)
 
 ---
@@ -112,6 +261,24 @@
 - אזל מהמלאי  
 
 המידע מתאים להצגה במסך ניהול מלאי.
+
+SELECT 
+    p.ProductID,
+    p.ProductName,
+    s.StoreName,
+    c.CategoryName,
+    i.Quantity,
+    i.MinimumStock,
+    CASE
+        WHEN i.Quantity = 0 THEN 'Out of Stock'
+        WHEN i.Quantity < i.MinimumStock THEN 'Low Stock'
+        ELSE 'In Stock'
+    END AS StockStatus
+FROM INVENTORY i
+JOIN PRODUCT p ON i.ProductID = p.ProductID
+JOIN STORE s ON i.StoreID = s.StoreID
+JOIN CATEGORY c ON p.CategoryID = c.CategoryID
+ORDER BY p.ProductID, s.StoreID;
 
 ![שאילתה 6](images/selectQuery6.png)
 
@@ -125,6 +292,13 @@
 - מלאי כולל: כמות היחידות הפיזית הקיימת בכלל מחסני וסניפי הרשת.
 - מוקדי חוסר: מספר המקרים בהם מוצר בסניף מסוים ירד מתחת לסף המלאי המינימלי.
 
+SELECT 
+    (SELECT COUNT(*) FROM EMPLOYEE) AS TotalEmployees,
+    (SELECT COUNT(*) FROM PRODUCT) AS ProductTypes,
+    (SELECT SUM(Quantity) FROM INVENTORY) AS OverallStock,
+    (SELECT COUNT(*) FROM INVENTORY WHERE Quantity < MinimumStock) AS LowStockPoints
+FROM (SELECT 1) AS dummy;
+
 ![שאילתה 7](images/selectQuery7.png)
 
 ---
@@ -133,6 +307,25 @@
 שאילתה זו מציגה את כל ההנחות ברשת ואת המוצרים המשויכים אליהן, כולל פירוק תאריכים ליום, חודש ושנה.  
 המידע מאפשר ניהול נוח של מבצעים והצגה ברורה בממשק המשתמש.
 השאילתה מכילה תאריכים ופירוקם לימים חודשים ושנים.
+
+SELECT 
+    d.DiscountID,
+    d.DiscountName,
+    d.DiscountPercentage,
+    p.ProductID,
+    p.ProductName,
+    -- פירוק תאריך התחלה לניהול נוח ב-GUI
+    EXTRACT(DAY FROM d.StartDate) AS StartDay,
+    EXTRACT(MONTH FROM d.StartDate) AS StartMonth,
+    EXTRACT(YEAR FROM d.StartDate) AS StartYear,
+    -- פירוק תאריך סיום לניהול נוח ב-GUI
+    EXTRACT(DAY FROM d.EndDate) AS EndDay,
+    EXTRACT(MONTH FROM d.EndDate) AS EndMonth,
+    EXTRACT(YEAR FROM d.EndDate) AS EndYear
+FROM DISCOUNT d
+JOIN APPLIES_TO a ON d.DiscountID = a.DiscountID
+JOIN PRODUCT p ON a.ProductID = p.ProductID
+ORDER BY d.StartDate DESC, d.DiscountID;
 
 ![שאילתה 8](images/selectQuery8.png)
 
