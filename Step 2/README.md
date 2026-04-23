@@ -18,6 +18,7 @@
 
 **גרסה 1:**
 
+```
 SELECT 
     p.ProductID,
     p.ProductName,
@@ -30,11 +31,13 @@ JOIN PRODUCT p ON i.ProductID = p.ProductID
 JOIN STORE s ON i.StoreID = s.StoreID
 WHERE i.Quantity < i.MinimumStock
 ORDER BY p.ProductID, s.StoreID;
+```
 
 ![הרצת גרסה 1](images/selectQuery1_1.png)
 
 **גרסה 2:**
 
+```
 SELECT 
     p.ProductID,
     p.ProductName,
@@ -52,6 +55,7 @@ WHERE (i.StoreID, i.ProductID) IN
     WHERE Quantity < MinimumStock
 )
 ORDER BY p.ProductID, s.StoreID;
+```
 
 ![הרצת גרסה 2](images/selectQuery1_2.png)
 
@@ -69,6 +73,7 @@ ORDER BY p.ProductID, s.StoreID;
 
 **גרסה 1:**
 
+```
 SELECT 
     p.ProductID,
     p.ProductName,
@@ -79,11 +84,13 @@ FROM PRODUCT p
 JOIN CATEGORY c ON p.CategoryID = c.CategoryID
 WHERE p.ExpirationDate BETWEEN DATE '2026-04-16' AND DATE '2026-05-16'
 ORDER BY p.ExpirationDate, p.ProductID;
+```
 
 ![הרצת גרסה 1](images/selectQuery2_1.png)
 
 **גרסה 2:**
 
+```
 SELECT 
     p.ProductID,
     p.ProductName,
@@ -99,6 +106,7 @@ WHERE p.ProductID IN
     WHERE ExpirationDate BETWEEN DATE '2026-04-16' AND DATE '2026-05-16'
 )
 ORDER BY p.ExpirationDate, p.ProductID;
+```
 
 ![הרצת גרסה 2](images/selectQuery2_2.png)
 
@@ -116,6 +124,7 @@ ORDER BY p.ExpirationDate, p.ProductID;
 
 **גרסה 1:**
 
+```
 SELECT 
     s.SupplierID,
     s.SupplierName,
@@ -126,11 +135,13 @@ FROM SUPPLIER s
 JOIN SUPPLIERED_BY sb ON s.SupplierID = sb.SupplierID
 GROUP BY s.SupplierID, s.SupplierName, s.Email, s.ContactPhone
 ORDER BY s.SupplierID;
+```
 
 ![הרצת גרסה 1](images/selectQuery3_1.png)
 
 **גרסה 2:**
 
+```
 SELECT 
     s.SupplierID,
     s.SupplierName,
@@ -149,6 +160,7 @@ WHERE EXISTS
     WHERE sb.SupplierID = s.SupplierID
 )
 ORDER BY s.SupplierID;
+```
 
 ![הרצת גרסה 2](images/selectQuery3_2.png)
 
@@ -166,6 +178,7 @@ ORDER BY s.SupplierID;
 
 **גרסה 1:**
 
+```
 SELECT 
     e.EmployeeID,
     e.FirstName,
@@ -177,11 +190,13 @@ FROM EMPLOYEE e
 JOIN STORE s ON e.StoreID = s.StoreID
 WHERE e.Status = 'Active'
 ORDER BY e.EmployeeID;
+```
 
 ![הרצת גרסה 1](images/selectQuery4_1.png)
 
 **גרסה 2:**
 
+```
 SELECT 
     e.EmployeeID,
     e.FirstName,
@@ -202,6 +217,7 @@ WHERE e.Status = 'Active'
       WHERE s.StoreID = e.StoreID
   )
 ORDER BY e.EmployeeID;
+```
 
 ![הרצת גרסה 2](images/selectQuery4_2.png)
 
@@ -222,6 +238,7 @@ ORDER BY e.EmployeeID;
 
 המידע מסייע בניהול סניפים והשוואה ביניהם.
 
+```
 SELECT 
     s.StoreID,
     s.StoreName,
@@ -249,6 +266,7 @@ GROUP BY
     e_mgr.FirstName, 
     e_mgr.LastName
 ORDER BY s.StoreID;
+```
 
 ![שאילתה 5](images/selectQuery5.png)
 
@@ -262,6 +280,7 @@ ORDER BY s.StoreID;
 
 המידע מתאים להצגה במסך ניהול מלאי.
 
+```
 SELECT 
     p.ProductID,
     p.ProductName,
@@ -279,6 +298,7 @@ JOIN PRODUCT p ON i.ProductID = p.ProductID
 JOIN STORE s ON i.StoreID = s.StoreID
 JOIN CATEGORY c ON p.CategoryID = c.CategoryID
 ORDER BY p.ProductID, s.StoreID;
+```
 
 ![שאילתה 6](images/selectQuery6.png)
 
@@ -292,12 +312,14 @@ ORDER BY p.ProductID, s.StoreID;
 - מלאי כולל: כמות היחידות הפיזית הקיימת בכלל מחסני וסניפי הרשת.
 - מוקדי חוסר: מספר המקרים בהם מוצר בסניף מסוים ירד מתחת לסף המלאי המינימלי.
 
+```
 SELECT 
     (SELECT COUNT(*) FROM EMPLOYEE) AS TotalEmployees,
     (SELECT COUNT(*) FROM PRODUCT) AS ProductTypes,
     (SELECT SUM(Quantity) FROM INVENTORY) AS OverallStock,
     (SELECT COUNT(*) FROM INVENTORY WHERE Quantity < MinimumStock) AS LowStockPoints
 FROM (SELECT 1) AS dummy;
+```
 
 ![שאילתה 7](images/selectQuery7.png)
 
@@ -308,6 +330,7 @@ FROM (SELECT 1) AS dummy;
 המידע מאפשר ניהול נוח של מבצעים והצגה ברורה בממשק המשתמש.
 השאילתה מכילה תאריכים ופירוקם לימים חודשים ושנים.
 
+```
 SELECT 
     d.DiscountID,
     d.DiscountName,
@@ -326,6 +349,7 @@ FROM DISCOUNT d
 JOIN APPLIES_TO a ON d.DiscountID = a.DiscountID
 JOIN PRODUCT p ON a.ProductID = p.ProductID
 ORDER BY d.StartDate DESC, d.DiscountID;
+```
 
 ![שאילתה 8](images/selectQuery8.png)
 
