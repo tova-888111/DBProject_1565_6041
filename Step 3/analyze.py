@@ -1,56 +1,66 @@
-from simple_ddl_parser import DDLParser
-import json
+import re
 
-def analyze_sql_backup(file_path):
+def final_reverse_engineer(file_path):
     try:
-        # 1. קריאת תוכן הקובץ
-        with open(file_path, 'r', encoding='utf-8') as f:
-            sql_content = f.read()
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
 
-        print(f"--- מנתח קובץ גיבוי: {file_path} ---")
+        # 1. חיפוש כל פקודות ה-ALTER TABLE שמוסיפות מפתחות
+        # מחפש מפתחות ראשיים
+        pk_matches = re.findall(r'ALTER TABLE ONLY (?:public\.)?"?(\w+)"?.*?PRIMARY KEY \("?(\w+)"?\);', content, re.DOTALL | re.IGNORECASE)
+        pk_map = {t.upper(): c.lower() for t, c in pk_matches}
+
+        # מחפש מפתחות זרים
+        fk_matches = re.findall(r'ALTER TABLE ONLY (?:public\.)?"?(\w+)"?.*?FOREIGN KEY \("?(\w+)"?\)\s+REFERENCES (?:public\.)?"?(\w+)"?\("?(\w+)"?\)', content, re.DOTALL | re.IGNORECASE)
         
-        # 2. הרצת ה-Parser על תוכן הקובץ
-        # ה-Parser מחלץ טבלאות, עמודות, מפתחות וקשרים
-        parser = DDLParser(sql_content)
-        result = parser.run(group_by_type=True)
+        # 2. מציאת מבנה הטבלאות
+        table_blocks = re.findall(r'CREATE TABLE (?:public\.)?"?(\w+)"?\s*\((.*?)\);', content, re.DOTALL | re.IGNORECASE)
 
-        if not result.get('tables'):
-            print("לא נמצאו פקודות CREATE TABLE בקובץ. וודאי שהקובץ הוא בפורמט Plain SQL.")
-            return
+        print(f"\n=== FINAL STRUCTURAL ANALYSIS REPORT: {file_path} ===")
+        print("=" * 100)
 
-        # 3. מעבר על התוצאות והדפסה בצורה שנוחה לשרטוט
-        for table in result['tables']:
-            table_name = table['table_name']
-            print(f"\n[טבלה]: {table_name.upper()}")
+        for table_name, columns_raw in table_blocks:
+            t_upper = table_name.upper()
             
-            # הדפסת עמודות
-            print("  עמודות:")
-            for col in table['columns']:
-                name = col['name']
-                dtype = col['type']
-                nullable = "NULL" if col['nullable'] else "NOT NULL"
-                is_pk = "(PK)" if col.get('primary_key') else ""
-                print(f"    - {name:20} | {dtype:15} | {nullable} {is_pk}")
+            # זיהוי קשרים עבור הטבלה הנוכחית
+            table_fks = [f for f in fk_matches if f[0].upper() == t_upper]
+            
+            # החלטה על סוג הישות (Algorithm logic)
+            if "_" in t_upper:
+                design_type = "MULTIVALUED ATTRIBUTE / WEAK ENTITY"
+            elif len(table_fks) >= 2:
+                design_type = "RELATIONSHIP (Diamond in ERD)"
+            else:
+                design_type = "ENTITY (Rectangle in ERD)"
 
-            # הדפסת מפתחות זרים (קשרים)
-            # לעיתים הקשרים מוגדרים בתוך הטבלה ולעיתים ב-ALTER TABLE בנפרד
-            constraints = table.get('constraints', {})
-            fks = table.get('foreign_keys', [])
+            print(f"\n[TABLE]: {t_upper}")
+            print(f"DESIGN TYPE: {design_type}")
+            print(f"{'Column Name':<25} | {'Key Classification'}")
+            print("-" * 100)
+
+            # פירוק העמודות
+            columns = [c.strip().split()[0].replace('"', '').lower() for c in columns_raw.split(',\n') if c.strip()]
             
-            if fks:
-                print("  קשרים (Foreign Keys):")
-                for fk in fks:
-                    col = fk['columns'][0]
-                    ref_table = fk['ref_table']
-                    ref_col = fk['ref_columns'][0]
-                    print(f"    -> העמודה '{col}' מקשרת לטבלה '{ref_table}' ({ref_col})")
-            
-            print("-" * 40)
+            for col in columns:
+                if col in ['constraint', 'primary', 'foreign']: continue
+                
+                key_label = "Regular Attribute"
+                
+                # האם זה PK?
+                if pk_map.get(t_upper) == col:
+                    key_label = "[PK] PRIMARY KEY (Underline in ERD)"
+                
+                # האם זה FK?
+                for _, f_col, r_table, r_col in table_fks:
+                    if f_col.lower() == col:
+                        key_label = f"[FK] FOREIGN KEY -> Refers to {r_table.upper()}({r_col})"
+                
+                print(f"{col:<25} | {key_label}")
+
+            print("-" * 100)
 
     except Exception as e:
-        print(f"שגיאה בניתוח הקובץ: {e}")
+        print(f"Error: {e}")
 
 if __name__ == "__main__":
-    # החליפי את השם לשם הקובץ הנקי שלך (אחרי ההמרה ל-Plain)
-    file_to_analyze = 'clean_logistics_backup.sql' 
-    analyze_engineer = analyze_sql_backup(file_to_analyze)
+    final_reverse_engineer('BackupSara.sql')
