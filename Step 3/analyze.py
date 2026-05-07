@@ -1,66 +1,112 @@
 import re
 
+def clean_id(name):
+    return name.replace('"', '').strip().lower()
+
 def final_reverse_engineer(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
 
-        # 1. חיפוש כל פקודות ה-ALTER TABLE שמוסיפות מפתחות
-        # מחפש מפתחות ראשיים
-        pk_matches = re.findall(r'ALTER TABLE ONLY (?:public\.)?"?(\w+)"?.*?PRIMARY KEY \("?(\w+)"?\);', content, re.DOTALL | re.IGNORECASE)
-        pk_map = {t.upper(): c.lower() for t, c in pk_matches}
+        # 1. מיפוי מפתחות ראשיים (PK) מה-SQL (ALTER + CONSTRAINT)
+        pk_map = {}
+        pk_pattern = r'ALTER TABLE\s+(?:ONLY\s+)?(?:public\.)?"?(\w+)"?.*?PRIMARY KEY\s*\((.*?)\);'
+        for table, cols in re.findall(pk_pattern, content, re.DOTALL | re.IGNORECASE):
+            pk_map[table.upper()] = [clean_id(c) for c in cols.split(',')]
 
-        # מחפש מפתחות זרים
-        fk_matches = re.findall(r'ALTER TABLE ONLY (?:public\.)?"?(\w+)"?.*?FOREIGN KEY \("?(\w+)"?\)\s+REFERENCES (?:public\.)?"?(\w+)"?\("?(\w+)"?\)', content, re.DOTALL | re.IGNORECASE)
-        
-        # 2. מציאת מבנה הטבלאות
+        # 2. מיפוי מפתחות זרים (FK)
+        fk_list = []
+        fk_pattern = r'ALTER TABLE\s+(?:ONLY\s+)?(?:public\.)?"?(\w+)"?.*?FOREIGN KEY\s*\((.*?)\)\s+REFERENCES\s+(?:public\.)?"?(\w+)"?\s*\((.*?)\)'
+        for table, fcols, rtable, rcols in re.findall(fk_pattern, content, re.DOTALL | re.IGNORECASE):
+            fk_list.append({
+                "table": table.upper(),
+                "fk_cols": [clean_id(c) for c in fcols.split(',')],
+                "ref_table": rtable.upper(),
+                "ref_cols": [clean_id(c) for c in rcols.split(',')]
+            })
+
+        # --- היקש לוגי של מפתחות חסרים ---
+        for fk in fk_list:
+            target_table = fk["ref_table"]
+            target_cols = fk["ref_cols"]
+            if target_table not in pk_map:
+                pk_map[target_table] = target_cols
+            else:
+                for col in target_cols:
+                    if col not in pk_map[target_table]:
+                        pk_map[target_table].append(col)
+
+        # 3. זיהוי מבנה הטבלאות
         table_blocks = re.findall(r'CREATE TABLE (?:public\.)?"?(\w+)"?\s*\((.*?)\);', content, re.DOTALL | re.IGNORECASE)
 
-        print(f"\n=== FINAL STRUCTURAL ANALYSIS REPORT: {file_path} ===")
-        print("=" * 100)
+        print(f"\n=== FINAL REVERSE ENGINEERING REPORT FOR ERD: {file_path} ===")
+        print("=" * 125)
 
         for table_name, columns_raw in table_blocks:
             t_upper = table_name.upper()
             
-            # זיהוי קשרים עבור הטבלה הנוכחית
-            table_fks = [f for f in fk_matches if f[0].upper() == t_upper]
-            
-            # החלטה על סוג הישות (Algorithm logic)
-            if "_" in t_upper:
-                design_type = "MULTIVALUED ATTRIBUTE / WEAK ENTITY"
-            elif len(table_fks) >= 2:
-                design_type = "RELATIONSHIP (Diamond in ERD)"
+            # בדיקת PK פנימי בתוך הבלוק
+            if t_upper not in pk_map:
+                internal = re.search(r'"?(\w+)"?\s+[\w\(\)]+\s+PRIMARY KEY', columns_raw, re.IGNORECASE)
+                if internal: pk_map[t_upper] = [internal.group(1).lower()]
+
+            t_pks = pk_map.get(t_upper, [])
+            t_fks = [f for f in fk_list if f["table"] == t_upper]
+
+            # --- לוגיקה לסיווג צורות ב-ERD ---
+            is_weak = False
+            # אם אחד מה-FKs הוא גם חלק מה-PK -> ישות חלשה
+            if t_pks:
+                for fk in t_fks:
+                    if any(col in t_pks for col in fk["fk_cols"]):
+                        is_weak = True
+                        break
+
+            if is_weak:
+                design_type = "WEAK ENTITY (Double Rectangle)"
+            elif len(t_fks) >= 2:
+                # טבלה שמקשרת בין ישויות ומהווה צומת (כמו ORDER)
+                design_type = "ASSOCIATIVE ENTITY (Rectangle + Diamond)"
+            elif "_" in t_upper:
+                design_type = "MULTIVALUED ATTRIBUTE"
             else:
-                design_type = "ENTITY (Rectangle in ERD)"
+                design_type = "REGULAR ENTITY (Rectangle)"
 
             print(f"\n[TABLE]: {t_upper}")
-            print(f"DESIGN TYPE: {design_type}")
-            print(f"{'Column Name':<25} | {'Key Classification'}")
-            print("-" * 100)
+            print(f"ERD SUGGESTION: {design_type}")
+            print(f"{'Column Name':<25} | {'Classification':<45} | {'Cardinality Context'}")
+            print("-" * 125)
 
-            # פירוק העמודות
-            columns = [c.strip().split()[0].replace('"', '').lower() for c in columns_raw.split(',\n') if c.strip()]
-            
-            for col in columns:
-                if col in ['constraint', 'primary', 'foreign']: continue
+            # פירוק עמודות
+            col_lines = re.split(r',(?![^\(]*\))', columns_raw) 
+            for line in col_lines:
+                line = line.strip()
+                if not line or any(k in line.upper() for k in ['CONSTRAINT', 'PRIMARY KEY', 'FOREIGN KEY', 'CHECK']):
+                    continue
                 
-                key_label = "Regular Attribute"
+                col = clean_id(line.split()[0])
+                labels = []
+                context = "-"
                 
-                # האם זה PK?
-                if pk_map.get(t_upper) == col:
-                    key_label = "[PK] PRIMARY KEY (Underline in ERD)"
+                # האם PK?
+                if col in t_pks:
+                    labels.append("[PK] PRIMARY KEY")
+                    context = "Identifying Attribute" if is_weak else "Identifier"
                 
-                # האם זה FK?
-                for _, f_col, r_table, r_col in table_fks:
-                    if f_col.lower() == col:
-                        key_label = f"[FK] FOREIGN KEY -> Refers to {r_table.upper()}({r_col})"
-                
-                print(f"{col:<25} | {key_label}")
+                # האם FK?
+                for fk in t_fks:
+                    if col in fk["fk_cols"]:
+                        labels.append(f"[FK] -> {fk['ref_table']}")
+                        context = "Many to 1 (N:1)"
 
-            print("-" * 100)
+                final_label = ", ".join(labels) if labels else "Regular Attribute"
+                print(f"{col:<25} | {final_label:<45} | {context}")
+
+            print("-" * 125)
 
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error during execution: {e}")
 
 if __name__ == "__main__":
+    # ודאי ששם הקובץ תואם לקובץ הגיבוי שלך
     final_reverse_engineer('BackupSara.sql')
