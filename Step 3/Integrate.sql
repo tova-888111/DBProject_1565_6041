@@ -2,22 +2,26 @@
 CREATE SCHEMA sara_branch;
 
 
------------- שלב 1: התאמת מבנה הטבלאות הקיימות ב-PUBLIC ------------
+-- ====================================================================
+-- שלב 1: עדכון מבני של טבלאות קיימות בסכמת PUBLIC
+-- ====================================================================
 
--- 1. עדכון טבלת STORE ב-public (הוספת העמודה של שרה ושינוי הגדרות)
-ALTER TABLE public.STORE ADD COLUMN IF NOT EXISTS websiteurl TEXT;
-ALTER TABLE public.STORE ALTER COLUMN Phone TYPE VARCHAR(20); -- התאמה לאורך של שרה
-ALTER TABLE public.STORE ALTER COLUMN StoreEmail DROP NOT NULL; -- מאחר ולשרה אין אימיילים לחנויות
+-- 1. עדכון טבלת STORE ב-public (הוספת עמודת אתר ושינוי אורך טלפון במידת הצורך)
+ALTER TABLE public.STORE 
+    ADD COLUMN IF NOT EXISTS websiteurl TEXT,
+    ALTER COLUMN Phone TYPE VARCHAR(20);
 
--- 2. עדכון טבלת PRODUCT ב-public (הוספת תאריך ייצור)
-ALTER TABLE public.PRODUCT ADD COLUMN IF NOT EXISTS dateofmanufacture DATE;
+-- 2. עדכון טבלת PRODUCT ב-public (הסרת כשרות כי היא עוברת לטבלה נפרדת, והוספת תאריך ייצור)
+ALTER TABLE public.PRODUCT 
+    DROP COLUMN IF EXISTS Kashrut,
+    ADD COLUMN IF NOT EXISTS dateofmanufacture DATE;
 
--- 3. עדכון טבלת INVENTORY ב-public (הפיכת StoreID ל-Nullable לצורך קליטת המלאי הכללי של שרה)
-ALTER TABLE public.INVENTORY ALTER COLUMN StoreID DROP NOT NULL;
 
+-- ====================================================================
+-- שלב 2: יצירת הטבלאות החדשות בסכמת PUBLIC
+-- ====================================================================
 
------------- שלב 2: יצירת הטבלאות החדשות ב-PUBLIC (אלו שהיו רק אצל שרה) ------------
-
+-- 1. יצירת טבלת מחסנים
 CREATE TABLE IF NOT EXISTS public.WAREHOUSE
 (
   WarehouseID INT NOT NULL,
@@ -26,6 +30,7 @@ CREATE TABLE IF NOT EXISTS public.WAREHOUSE
   PRIMARY KEY (WarehouseID)
 );
 
+-- 2. יצירת טבלת חברות משלוחים
 CREATE TABLE IF NOT EXISTS public.DELIVERYCOMPAGNY
 (
   DeliveryCieID INT NOT NULL,
@@ -37,6 +42,7 @@ CREATE TABLE IF NOT EXISTS public.DELIVERYCOMPAGNY
   UNIQUE (DeliveryCiePhoneNb)
 );
 
+-- 3. יצירת טבלת משאיות
 CREATE TABLE IF NOT EXISTS public.TRUCK
 (
   DriverID INT NOT NULL,
@@ -50,6 +56,7 @@ CREATE TABLE IF NOT EXISTS public.TRUCK
   UNIQUE (LicensePlate)
 );
 
+-- 4. יצירת טבלת הזמנות
 CREATE TABLE IF NOT EXISTS public."ORDER"
 (
   OrderId INT NOT NULL,
@@ -63,6 +70,45 @@ CREATE TABLE IF NOT EXISTS public."ORDER"
   FOREIGN KEY (DriverID) REFERENCES public.TRUCK(DriverID)
 );
 
+-- 5. טבלת כשרות מוצר (קשר מרובה למוצר)
+CREATE TABLE IF NOT EXISTS public.PRODUCT_KASHRUT
+(
+  ProductID INT NOT NULL,
+  Kashrut VARCHAR(50) NOT NULL,
+  PRIMARY KEY (Kashrut, ProductID),
+  FOREIGN KEY (ProductID) REFERENCES public.PRODUCT(ProductID) ON DELETE CASCADE
+);
+
+-- 6. טבלת מנהלי מחסנים
+CREATE TABLE IF NOT EXISTS public.WAREHOUSE_WAREHOUSEMANAGER
+(
+  WarehouseID INT NOT NULL,
+  WarehouseManager VARCHAR(100) NOT NULL,
+  PRIMARY KEY (WarehouseManager, WarehouseID),
+  FOREIGN KEY (WarehouseID) REFERENCES public.WAREHOUSE(WarehouseID) ON DELETE CASCADE
+);
+
+-- 7. טבלת אזורי שירות של חברות משלוחים
+CREATE TABLE IF NOT EXISTS public.DELIVERYCOMPAGNY_REGIONSERVED
+(
+  DeliveryCieID INT NOT NULL,
+  RegionServed VARCHAR(50) NOT NULL,
+  PRIMARY KEY (RegionServed, DeliveryCieID),
+  FOREIGN KEY (DeliveryCieID) REFERENCES public.DELIVERYCOMPAGNY(DeliveryCieID) ON DELETE CASCADE
+);
+
+-- 8. טבלת תכולת הזמנה (קשר מרובה בין מוצרים להזמנות)
+CREATE TABLE IF NOT EXISTS public.CONTAINS
+(
+  OrderId INT NOT NULL,
+  ProductID INT NOT NULL,
+  Quantity INT NOT NULL DEFAULT 1 CHECK (Quantity > 0),
+  PRIMARY KEY (OrderId, ProductID),
+  FOREIGN KEY (OrderId) REFERENCES public."ORDER"(OrderId) ON DELETE CASCADE,
+  FOREIGN KEY (ProductID) REFERENCES public.PRODUCT(ProductID)
+);
+
+-- 9. טבלת מיקום מוצרים במחסן
 CREATE TABLE IF NOT EXISTS public.LOCATED
 (
   ProductID INT NOT NULL,
@@ -74,113 +120,79 @@ CREATE TABLE IF NOT EXISTS public.LOCATED
   FOREIGN KEY (WarehouseID) REFERENCES public.WAREHOUSE(WarehouseID)
 );
 
-CREATE TABLE IF NOT EXISTS public.CONTAINS
-(
-  OrderId INT NOT NULL,
-  ProductID INT NOT NULL,
-  Quantity INT NOT NULL DEFAULT 1 CHECK (Quantity > 0),
-  PRIMARY KEY (OrderId, ProductID),
-  FOREIGN KEY (OrderId) REFERENCES public."ORDER"(OrderId) ON DELETE CASCADE,
-  FOREIGN KEY (ProductID) REFERENCES public.PRODUCT(ProductID)
-);
 
-CREATE TABLE IF NOT EXISTS public.PRODUCT_KASHRUT
-(
-  ProductID INT NOT NULL,
-  Kashrut VARCHAR(50) NOT NULL,
-  PRIMARY KEY (Kashrut, ProductID),
-  FOREIGN KEY (ProductID) REFERENCES public.PRODUCT(ProductID) ON DELETE CASCADE
-);
+-- ====================================================================
+-- שלב 3: העתקת ומיזוג הנתונים מ-SARA_BRANCH ל-PUBLIC (מניעת כפילויות)
+-- ====================================================================
 
-CREATE TABLE IF NOT EXISTS public.WAREHOUSE_WAREHOUSEMANAGER
-(
-  WarehouseID INT NOT NULL,
-  WarehouseManager VARCHAR(100) NOT NULL,
-  PRIMARY KEY (WarehouseManager, WarehouseID),
-  FOREIGN KEY (WarehouseID) REFERENCES public.WAREHOUSE(WarehouseID) ON DELETE CASCADE
-);
-
-CREATE TABLE IF NOT EXISTS public.DELIVERYCOMPAGNY_REGIONSERVED
-(
-  DeliveryCieID INT NOT NULL,
-  RegionServed VARCHAR(50) NOT NULL,
-  PRIMARY KEY (RegionServed, DeliveryCieID),
-  FOREIGN KEY (DeliveryCieID) REFERENCES public.DELIVERYCOMPAGNY(DeliveryCieID) ON DELETE CASCADE
-);
-
-
------------- שלב 3: מיזוג והזרקת הנתונים מ-SARA_BRANCH ל-PUBLIC ------------
-
--- 1. מיזוג חנויות: אם החנות קיימת ב-public, נעדכן לה את ה-websiteurl וה-rating של שרה. אם לא, נכניס אותה.
+-- 1. מיזוג נתוני חנויות (מעדכן את אתר האינטרנט לחנויות קיימות, מוסיף חנויות חדשות)
 INSERT INTO public.STORE (StoreID, StoreName, Phone, StoreEmail, Rating, websiteurl)
-SELECT 
-    s.StoreID, 
-    s.StoreName, 
-    s.Phone, 
-    'unknown@ramilevi.co.il', -- אימייל דיפולטיבי לחנויות של שרה מאחר והשדה ב-public הוא NOT NOT
-    COALESCE(s.Rating, 3),    -- אם אין דירוג, נשים 3 כברירת מחדל
-    s.WebSiteUrl
-FROM sara_branch.STORE s
+SELECT StoreID, StoreName, Phone, 'info@store.com', COALESCE(Rating, 5), WebSiteUrl 
+FROM sara_branch.STORE
 ON CONFLICT (StoreID) DO UPDATE 
 SET websiteurl = EXCLUDED.websiteurl,
-    Rating = EXCLUDED.Rating;
+    Phone = EXCLUDED.Phone;
 
--- 2. מיזוג מוצרים: אם המוצר קיים, נעדכן לו את תאריך הייצור של שרה. אם לא קיים, נכניס כמוצר חדש (עם ערכי ברירת מחדל לעמודות החסרות של שרה).
+-- 2. מיזוג נתוני מוצרים (מעדכן תאריך ייצור למוצרים קיימים, מוסיף חדשים עם קטגוריית ברירת מחדל 1)
 INSERT INTO public.PRODUCT (ProductID, ProductName, Price, Brand, ExpirationDate, dateofmanufacture, CategoryID)
-SELECT 
-    p.ProductID, 
-    p.ProductName, 
-    p.Price, 
-    'Generic', -- מותג דיפולטיבי למוצרים של שרה שחסר להם השדה הזה
-    p.ExpirationDate, 
-    p.DateOfManufacture,
-    1 -- משייך זמנית לקטגוריה מספר 1. ודאי שקיימת אצלך לפחות קטגוריה אחת בטבלת CATEGORY ב-public!
-FROM sara_branch.PRODUCT p
+SELECT ProductID, ProductName, Price, 'General', ExpirationDate, DateOfManufacture, 1 
+FROM sara_branch.PRODUCT
 ON CONFLICT (ProductID) DO UPDATE 
-SET dateofmanufacture = EXCLUDED.dateofmanufacture;
+SET dateofmanufacture = EXCLUDED.dateofmanufacture,
+    Price = EXCLUDED.Price;
 
--- 3. העברת חברות משלוחים
-INSERT INTO public.DELIVERYCOMPAGNY SELECT * FROM sara_branch.deliverycompagny ON CONFLICT DO NOTHING;
+-- 3. העתקת מחסנים
+INSERT INTO public.WAREHOUSE 
+SELECT WarehouseID, Region, Address FROM sara_branch.WAREHOUSE 
+ON CONFLICT (WarehouseID) DO NOTHING;
 
--- 4. העברת אזורי שירות של חברות המשלוחים
-INSERT INTO public.DELIVERYCOMPAGNY_REGIONSERVED SELECT * FROM sara_branch.deliverycompagny_regionserved ON CONFLICT DO NOTHING;
+-- 4. העתקת חברות משלוחים
+INSERT INTO public.DELIVERYCOMPAGNY 
+SELECT DeliveryCieID, DeliveryCieName, DeliveryCiePhoneNb, Email FROM sara_branch.DELIVERYCOMPAGNY 
+ON CONFLICT (DeliveryCieID) DO NOTHING;
 
--- 5. העברת משאיות/נהגים
-INSERT INTO public.TRUCK SELECT * FROM sara_branch.truck ON CONFLICT DO NOTHING;
+-- 5. העתקת משאיות/נהגים
+INSERT INTO public.TRUCK 
+SELECT DriverID, Active, Capacity, LicensePlate, MaintenanceStatus, DeliveryCieID FROM sara_branch.TRUCK 
+ON CONFLICT (DriverID) DO NOTHING;
 
--- 6. העברת מחסנים
-INSERT INTO public.WAREHOUSE SELECT * FROM sara_branch.warehouse ON CONFLICT DO NOTHING;
+-- 6. העתקת הזמנות
+INSERT INTO public."ORDER" 
+SELECT OrderId, Price, DeliveryDate, OrderDate, StoreID, DriverID FROM sara_branch."ORDER" 
+ON CONFLICT (OrderId) DO NOTHING;
 
--- 7. העברת מנהלי מחסנים
-INSERT INTO public.WAREHOUSE_WAREHOUSEMANAGER SELECT * FROM sara_branch.warehouse_warehousemanager ON CONFLICT DO NOTHING;
+-- 7. העתקת טבלאות קשר ישיר ותתי-ישויות
+INSERT INTO public.PRODUCT_KASHRUT 
+SELECT ProductID, Kashrut FROM sara_branch.PRODUCT_KASHRUT 
+ON CONFLICT (Kashrut, ProductID) DO NOTHING;
 
--- 8. העברת מיקומי מוצרים במחסנים
-INSERT INTO public.LOCATED SELECT * FROM sara_branch.located ON CONFLICT DO NOTHING;
+INSERT INTO public.WAREHOUSE_WAREHOUSEMANAGER 
+SELECT WarehouseID, WarehouseManager FROM sara_branch.WAREHOUSE_WAREHOUSEMANAGER 
+ON CONFLICT (WarehouseManager, WarehouseID) DO NOTHING;
 
--- 9. העברת כשרות מוצרים
-INSERT INTO public.PRODUCT_KASHRUT SELECT * FROM sara_branch.product_kashrut ON CONFLICT DO NOTHING;
+INSERT INTO public.DELIVERYCOMPAGNY_REGIONSERVED 
+SELECT DeliveryCieID, RegionServed FROM sara_branch.DELIVERYCOMPAGNY_REGIONSERVED 
+ON CONFLICT (RegionServed, DeliveryCieID) DO NOTHING;
 
--- 10. העברת הזמנות (מבוצע אחרי שחברות המשלוחים והחנויות כבר עודכנו)
-INSERT INTO public."ORDER" SELECT * FROM sara_branch."ORDER" ON CONFLICT DO NOTHING;
+INSERT INTO public.CONTAINS 
+SELECT OrderId, ProductID, Quantity FROM sara_branch.CONTAINS 
+ON CONFLICT (OrderId, ProductID) DO NOTHING;
 
--- 11. העברת תכולת הזמנות
-INSERT INTO public.CONTAINS SELECT * FROM sara_branch.contains ON CONFLICT DO NOTHING;
+INSERT INTO public.LOCATED 
+SELECT ProductID, WarehouseID, AisleNb, ShelfNb FROM sara_branch.LOCATED 
+ON CONFLICT (ProductID, WarehouseID) DO NOTHING;
 
--- 12. מיזוג טבלת מלאי: מאחר ובטבלה של שרה אין StoreID, נכניס את המלאי שלה עם StoreID כ-NULL (מלאי מרכזי/לא משויך)
+
+-- ====================================================================
+-- שלב 4: מיזוג מיוחד לטבלת המלאי (INVENTORY)
+-- ====================================================================
+-- בגלל שב-sara_branch לא היה StoreID, הנתונים משוייכים כאן כברירת מחדל לחנות מספר 1.
+-- במידה והמוצר כבר קיים במלאי של החנות, הכמויות יחוברו יחד פלוס עדכון רמת המלאי המינימלי.
+
 INSERT INTO public.INVENTORY (StoreID, ProductID, Quantity, MinimumStock)
-SELECT 
-    NULL, -- מלאי כללי מהאגף של שרה שאינו משויך לסניף ספציפי
-    i.ProductID, 
-    i.Quantity, 
-    i.MinimumStock
-FROM sara_branch.inventory i
+SELECT 1, ProductID, Quantity, MinimumStock 
+FROM sara_branch.INVENTORY
 ON CONFLICT (StoreID, ProductID) DO UPDATE 
-SET Quantity = public.INVENTORY.Quantity + EXCLUDED.Quantity; -- אם הצירוף קיים, נסכום את המלאים
-
-
------------- שלב 4: בדיקת תקינות מהירה (אופציונלי) ------------
--- את יכולה להריץ את השורות האלו כדי לוודא שהטבלאות ב-public אכן התמלאו:
--- SELECT COUNT(*) FROM public."ORDER";
--- SELECT COUNT(*) FROM public.WAREHOUSE;
--- SELECT COUNT(*) FROM public.PRODUCT_KASHRUT;
+SET Quantity = public.INVENTORY.Quantity + EXCLUDED.Quantity,
+    MinimumStock = GREATEST(public.INVENTORY.MinimumStock, EXCLUDED.MinimumStock);
 
