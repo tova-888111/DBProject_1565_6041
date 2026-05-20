@@ -13,18 +13,18 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./Step 1/01_createTables.sql:/docker-entrypoint-initdb.d/01_createTables.sql
-      - ./Step 1/02_insert_store_manual.sql:/docker-entrypoint-initdb.d/02_insert_store_manual.sql
-      - ./Step 1/03_insert_category_manual.sql:/docker-entrypoint-initdb.d/03_insert_category_python.sql
-      - ./Step 1/04_insert_supplier_mockaroo.sql:/docker-entrypoint-initdb.d/04_insert_supplier_mockaroo.sql
-      - ./Step 1/05_insert_discount_python.sql:/docker-entrypoint-initdb.d/05_insert_discount_python.sql
-      - ./Step 1/06_insert_location_mockaroo.sql:/docker-entrypoint-initdb.d/06_insert_location_mockaroo.sql
-      - ./Step 1/07_insert_product_python.sql:/docker-entrypoint-initdb.d/07_insert_product_python.sql
-      - ./Step 1/08_insert_employee_python.sql:/docker-entrypoint-initdb.d/08_insert_employee_python.sql
-      - ./Step 1/09_insert_inventory_python.sql:/docker-entrypoint-initdb.d/09_insert_inventory_python.sql
-      - ./Step 1/10_insert_suppliered_by_python.sql:/docker-entrypoint-initdb.d/10_insert_suppliered_by_python.sql
-      - ./Step 1/11_insert_applies_to_python.sql:/docker-entrypoint-initdb.d/11_insert_applies_to_python.sql
-      - postgres_data:/var/lib/postgresql
+     # - ./Step 1/01_createTables.sql:/docker-entrypoint-initdb.d/01_createTables.sql
+     # - ./Step 1/02_insert_store_manual.sql:/docker-entrypoint-initdb.d/02_insert_store_manual.sql
+     # - ./Step 1/03_insert_category_manual.sql:/docker-entrypoint-initdb.d/03_insert_category_python.sql
+     # - ./Step 1/04_insert_supplier_mockaroo.sql:/docker-entrypoint-initdb.d/04_insert_supplier_mockaroo.sql
+     # - ./Step 1/05_insert_discount_python.sql:/docker-entrypoint-initdb.d/05_insert_discount_python.sql
+     # - ./Step 1/06_insert_location_mockaroo.sql:/docker-entrypoint-initdb.d/06_insert_location_mockaroo.sql
+     # - ./Step 1/07_insert_product_python.sql:/docker-entrypoint-initdb.d/07_insert_product_python.sql
+     # - ./Step 1/08_insert_employee_python.sql:/docker-entrypoint-initdb.d/08_insert_employee_python.sql
+     # - ./Step 1/09_insert_inventory_python.sql:/docker-entrypoint-initdb.d/09_insert_inventory_python.sql
+     # - ./Step 1/10_insert_suppliered_by_python.sql:/docker-entrypoint-initdb.d/10_insert_suppliered_by_python.sql
+     # - ./Step 1/11_insert_applies_to_python.sql:/docker-entrypoint-initdb.d/11_insert_applies_to_python.sql
+     - postgres_data:/var/lib/postgresql
     networks:
       - ramilevi_network
 
