@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict WZavI6HepMffaHXAU1wNWydXrTQ7y5ZgXldiw1LNKY77CeCPSywp4NkBDcxrVWH
+\restrict vGeNmaudP8md3TPZW0Yuiw9gvOK7Ob4qhCR66vFwmurAEUaXzaCXxm5ErFZVtNH
 
 -- Dumped from database version 18.3 (Debian 18.3-1.pgdg13+1)
 -- Dumped by pg_dump version 18.3
 
--- Started on 2026-05-20 11:23:19 UTC
+-- Started on 2026-05-20 12:29:16 UTC
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -301,18 +301,18 @@ CREATE TABLE public.truck (
 ALTER TABLE public.truck OWNER TO tova;
 
 --
--- TOC entry 238 (class 1259 OID 57349)
+-- TOC entry 238 (class 1259 OID 57364)
 -- Name: v_delivery_performance_summary; Type: VIEW; Schema: public; Owner: tova
 --
 
 CREATE VIEW public.v_delivery_performance_summary AS
- SELECT dc.deliverycieid,
-    dc.deliveryciename,
-    dc.deliveryciephonenb,
-    count(DISTINCT t.driverid) AS activedrivers,
-    COALESCE(sum(t.capacity), (0)::numeric) AS totalfleetcapacity,
-    count(DISTINCT o.orderid) AS totalordershandled,
-    COALESCE(sum(o.price), (0)::numeric) AS totalordersrevenue
+ SELECT dc.deliverycieid AS company_id,
+    dc.deliveryciename AS company_name,
+    dc.deliveryciephonenb AS company_phone,
+    count(DISTINCT t.driverid) AS active_drivers,
+    COALESCE(sum(t.capacity), (0)::numeric) AS fleet_capacity,
+    count(DISTINCT o.orderid) AS orders_handled,
+    COALESCE(sum(o.price), (0)::numeric) AS revenue_handled
    FROM ((public.deliverycompany dc
      LEFT JOIN public.truck t ON (((dc.deliverycieid = t.deliverycieid) AND (t.active = 1))))
      LEFT JOIN public."ORDER" o ON ((t.driverid = o.driverid)))
@@ -336,21 +336,21 @@ CREATE TABLE public.warehouse (
 ALTER TABLE public.warehouse OWNER TO tova;
 
 --
--- TOC entry 239 (class 1259 OID 57354)
+-- TOC entry 239 (class 1259 OID 57369)
 -- Name: v_integrated_supply_chain; Type: VIEW; Schema: public; Owner: tova
 --
 
 CREATE VIEW public.v_integrated_supply_chain AS
- SELECT o.orderid,
-    s.storename,
-    p.productname,
-    p.brand,
-    c.quantity AS orderedquantity,
-    o.orderdate,
-    w.warehouseid,
-    w.region AS warehouseregion,
-    l.aislenb,
-    l.shelfnb
+ SELECT o.orderid AS order_id,
+    s.storename AS destination_store,
+    p.productname AS item_name,
+    p.brand AS item_brand,
+    c.quantity AS ordered_quantity,
+    o.orderdate AS order_date,
+    w.warehouseid AS warehouse_number,
+    w.region AS warehouse_region,
+    l.aislenb AS aisle_number,
+    l.shelfnb AS shelf_number
    FROM (((((public."ORDER" o
      JOIN public.store s ON ((o.storeid = s.storeid)))
      JOIN public.contains c ON ((o.orderid = c.orderid)))
@@ -362,19 +362,19 @@ CREATE VIEW public.v_integrated_supply_chain AS
 ALTER VIEW public.v_integrated_supply_chain OWNER TO tova;
 
 --
--- TOC entry 237 (class 1259 OID 57344)
+-- TOC entry 237 (class 1259 OID 57359)
 -- Name: v_store_operational_summary; Type: VIEW; Schema: public; Owner: tova
 --
 
 CREATE VIEW public.v_store_operational_summary AS
- SELECT s.storeid,
-    s.storename,
-    s.region,
-    s.rating,
-    count(DISTINCT e.employeeid) AS totalemployees,
-    COALESCE(sum(e.salary), (0)::numeric) AS totalmonthlypayroll,
-    count(DISTINCT i.productid) AS uniqueproductsinstock,
-    COALESCE(sum(i.quantity), (0)::bigint) AS totalitemsininventory
+ SELECT s.storeid AS store_id,
+    s.storename AS store_name,
+    s.region AS store_region,
+    s.rating AS store_rating,
+    count(DISTINCT e.employeeid) AS total_employees,
+    COALESCE(sum(e.salary), (0)::numeric) AS monthly_payroll,
+    count(DISTINCT i.productid) AS unique_products,
+    COALESCE(sum(i.quantity), (0)::bigint) AS total_items_stock
    FROM ((public.store s
      LEFT JOIN public.employee e ON (((s.storeid = e.storeid) AND ((e.status)::text = 'Active'::text))))
      LEFT JOIN public.inventory i ON ((s.storeid = i.storeid)))
@@ -49950,11 +49950,11 @@ ALTER TABLE ONLY public.warehousemanager
     ADD CONSTRAINT warehousemanager_warehouseid_fkey FOREIGN KEY (warehouseid) REFERENCES public.warehouse(warehouseid) ON DELETE CASCADE;
 
 
--- Completed on 2026-05-20 11:23:19 UTC
+-- Completed on 2026-05-20 12:29:17 UTC
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WZavI6HepMffaHXAU1wNWydXrTQ7y5ZgXldiw1LNKY77CeCPSywp4NkBDcxrVWH
+\unrestrict vGeNmaudP8md3TPZW0Yuiw9gvOK7Ob4qhCR66vFwmurAEUaXzaCXxm5ErFZVtNH
 

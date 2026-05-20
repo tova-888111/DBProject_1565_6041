@@ -470,3 +470,4 @@ ORDER BY warehouse_number DESC;
 ## חלק 6: ## 💾 גיבוי בסיס הנתונים (Database Backup)
 
 ### גיבוי בסיס הנתונים בקובץ backup3_20_05_2026.sql .
+![גיבוי](images/backup.png)
