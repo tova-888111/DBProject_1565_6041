@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict BwMv0XUtpVesGUZIOovLhBQfAUAJsds0XGAcPV9QprJBjq72afascld5ot7RuE2
+\restrict WZavI6HepMffaHXAU1wNWydXrTQ7y5ZgXldiw1LNKY77CeCPSywp4NkBDcxrVWH
 
 -- Dumped from database version 18.3 (Debian 18.3-1.pgdg13+1)
 -- Dumped by pg_dump version 18.3
 
--- Started on 2026-05-20 09:18:33 UTC
+-- Started on 2026-05-20 11:23:19 UTC
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -32,7 +32,7 @@ CREATE SCHEMA public;
 ALTER SCHEMA public OWNER TO pg_database_owner;
 
 --
--- TOC entry 3603 (class 0 OID 0)
+-- TOC entry 3618 (class 0 OID 0)
 -- Dependencies: 4
 -- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: pg_database_owner
 --
@@ -301,6 +301,27 @@ CREATE TABLE public.truck (
 ALTER TABLE public.truck OWNER TO tova;
 
 --
+-- TOC entry 238 (class 1259 OID 57349)
+-- Name: v_delivery_performance_summary; Type: VIEW; Schema: public; Owner: tova
+--
+
+CREATE VIEW public.v_delivery_performance_summary AS
+ SELECT dc.deliverycieid,
+    dc.deliveryciename,
+    dc.deliveryciephonenb,
+    count(DISTINCT t.driverid) AS activedrivers,
+    COALESCE(sum(t.capacity), (0)::numeric) AS totalfleetcapacity,
+    count(DISTINCT o.orderid) AS totalordershandled,
+    COALESCE(sum(o.price), (0)::numeric) AS totalordersrevenue
+   FROM ((public.deliverycompany dc
+     LEFT JOIN public.truck t ON (((dc.deliverycieid = t.deliverycieid) AND (t.active = 1))))
+     LEFT JOIN public."ORDER" o ON ((t.driverid = o.driverid)))
+  GROUP BY dc.deliverycieid, dc.deliveryciename, dc.deliveryciephonenb;
+
+
+ALTER VIEW public.v_delivery_performance_summary OWNER TO tova;
+
+--
 -- TOC entry 228 (class 1259 OID 49156)
 -- Name: warehouse; Type: TABLE; Schema: public; Owner: tova
 --
@@ -313,6 +334,54 @@ CREATE TABLE public.warehouse (
 
 
 ALTER TABLE public.warehouse OWNER TO tova;
+
+--
+-- TOC entry 239 (class 1259 OID 57354)
+-- Name: v_integrated_supply_chain; Type: VIEW; Schema: public; Owner: tova
+--
+
+CREATE VIEW public.v_integrated_supply_chain AS
+ SELECT o.orderid,
+    s.storename,
+    p.productname,
+    p.brand,
+    c.quantity AS orderedquantity,
+    o.orderdate,
+    w.warehouseid,
+    w.region AS warehouseregion,
+    l.aislenb,
+    l.shelfnb
+   FROM (((((public."ORDER" o
+     JOIN public.store s ON ((o.storeid = s.storeid)))
+     JOIN public.contains c ON ((o.orderid = c.orderid)))
+     JOIN public.product p ON ((c.productid = p.productid)))
+     JOIN public.located l ON ((p.productid = l.productid)))
+     JOIN public.warehouse w ON ((l.warehouseid = w.warehouseid)));
+
+
+ALTER VIEW public.v_integrated_supply_chain OWNER TO tova;
+
+--
+-- TOC entry 237 (class 1259 OID 57344)
+-- Name: v_store_operational_summary; Type: VIEW; Schema: public; Owner: tova
+--
+
+CREATE VIEW public.v_store_operational_summary AS
+ SELECT s.storeid,
+    s.storename,
+    s.region,
+    s.rating,
+    count(DISTINCT e.employeeid) AS totalemployees,
+    COALESCE(sum(e.salary), (0)::numeric) AS totalmonthlypayroll,
+    count(DISTINCT i.productid) AS uniqueproductsinstock,
+    COALESCE(sum(i.quantity), (0)::bigint) AS totalitemsininventory
+   FROM ((public.store s
+     LEFT JOIN public.employee e ON (((s.storeid = e.storeid) AND ((e.status)::text = 'Active'::text))))
+     LEFT JOIN public.inventory i ON ((s.storeid = i.storeid)))
+  GROUP BY s.storeid, s.storename, s.region, s.rating;
+
+
+ALTER VIEW public.v_store_operational_summary OWNER TO tova;
 
 --
 -- TOC entry 233 (class 1259 OID 49235)
@@ -328,7 +397,7 @@ CREATE TABLE public.warehousemanager (
 ALTER TABLE public.warehousemanager OWNER TO tova;
 
 --
--- TOC entry 3592 (class 0 OID 49201)
+-- TOC entry 3607 (class 0 OID 49201)
 -- Dependencies: 231
 -- Data for Name: ORDER; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -1338,7 +1407,7 @@ COPY public."ORDER" (orderid, price, deliverydate, orderdate, storeid, driverid)
 
 
 --
--- TOC entry 3588 (class 0 OID 16509)
+-- TOC entry 3603 (class 0 OID 16509)
 -- Dependencies: 227
 -- Data for Name: applies_to; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -1848,7 +1917,7 @@ COPY public.applies_to (productid, discountid) FROM stdin;
 
 
 --
--- TOC entry 3582 (class 0 OID 16428)
+-- TOC entry 3597 (class 0 OID 16428)
 -- Dependencies: 221
 -- Data for Name: category; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -2358,7 +2427,7 @@ COPY public.category (categoryid, categoryname, isactive) FROM stdin;
 
 
 --
--- TOC entry 3596 (class 0 OID 49259)
+-- TOC entry 3611 (class 0 OID 49259)
 -- Dependencies: 235
 -- Data for Name: contains; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -2882,7 +2951,7 @@ COPY public.contains (orderid, productid, quantity) FROM stdin;
 
 
 --
--- TOC entry 3590 (class 0 OID 49166)
+-- TOC entry 3605 (class 0 OID 49166)
 -- Dependencies: 229
 -- Data for Name: deliverycompany; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -2992,7 +3061,7 @@ COPY public.deliverycompany (deliverycieid, deliveryciename, deliveryciephonenb,
 
 
 --
--- TOC entry 3595 (class 0 OID 49247)
+-- TOC entry 3610 (class 0 OID 49247)
 -- Dependencies: 234
 -- Data for Name: deliverycompany_regionserved; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -3570,7 +3639,7 @@ COPY public.deliverycompany_regionserved (deliverycieid, regionserved) FROM stdi
 
 
 --
--- TOC entry 3586 (class 0 OID 16482)
+-- TOC entry 3601 (class 0 OID 16482)
 -- Dependencies: 225
 -- Data for Name: discount; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -4080,7 +4149,7 @@ COPY public.discount (discountid, discountname, discountpercentage, startdate, e
 
 
 --
--- TOC entry 3581 (class 0 OID 16411)
+-- TOC entry 3596 (class 0 OID 16411)
 -- Dependencies: 220
 -- Data for Name: employee; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -4571,7 +4640,7 @@ COPY public.employee (employeeid, firstname, lastname, status, salary, role, sto
 
 
 --
--- TOC entry 3585 (class 0 OID 16463)
+-- TOC entry 3600 (class 0 OID 16463)
 -- Dependencies: 224
 -- Data for Name: inventory; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -25221,7 +25290,7 @@ COPY public.inventory (storeid, productid, quantity, minimumstock) FROM stdin;
 
 
 --
--- TOC entry 3597 (class 0 OID 49279)
+-- TOC entry 3612 (class 0 OID 49279)
 -- Dependencies: 236
 -- Data for Name: located; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -25881,7 +25950,7 @@ COPY public.located (productid, warehouseid, aislenb, shelfnb) FROM stdin;
 
 
 --
--- TOC entry 3583 (class 0 OID 16436)
+-- TOC entry 3598 (class 0 OID 16436)
 -- Dependencies: 222
 -- Data for Name: product; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -45891,7 +45960,7 @@ COPY public.product (productid, productname, price, brand, expirationdate, categ
 
 
 --
--- TOC entry 3593 (class 0 OID 49223)
+-- TOC entry 3608 (class 0 OID 49223)
 -- Dependencies: 232
 -- Data for Name: product_kashrut; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -46461,7 +46530,7 @@ COPY public.product_kashrut (productid, kashrut) FROM stdin;
 
 
 --
--- TOC entry 3580 (class 0 OID 16385)
+-- TOC entry 3595 (class 0 OID 16385)
 -- Dependencies: 219
 -- Data for Name: store; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -46971,7 +47040,7 @@ COPY public.store (storeid, storename, phone, storeemail, rating, websiteurl, ad
 
 
 --
--- TOC entry 3584 (class 0 OID 16453)
+-- TOC entry 3599 (class 0 OID 16453)
 -- Dependencies: 223
 -- Data for Name: supplier; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -47481,7 +47550,7 @@ COPY public.supplier (supplierid, suppliername, email, contactphone, address) FR
 
 
 --
--- TOC entry 3587 (class 0 OID 16492)
+-- TOC entry 3602 (class 0 OID 16492)
 -- Dependencies: 226
 -- Data for Name: suppliered_by; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -47991,7 +48060,7 @@ COPY public.suppliered_by (supplierid, productid) FROM stdin;
 
 
 --
--- TOC entry 3591 (class 0 OID 49180)
+-- TOC entry 3606 (class 0 OID 49180)
 -- Dependencies: 230
 -- Data for Name: truck; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -48483,7 +48552,7 @@ COPY public.truck (driverid, active, capacity, licenseplate, maintenancestatus, 
 
 
 --
--- TOC entry 3589 (class 0 OID 49156)
+-- TOC entry 3604 (class 0 OID 49156)
 -- Dependencies: 228
 -- Data for Name: warehouse; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -48993,7 +49062,7 @@ COPY public.warehouse (warehouseid, region, address) FROM stdin;
 
 
 --
--- TOC entry 3594 (class 0 OID 49235)
+-- TOC entry 3609 (class 0 OID 49235)
 -- Dependencies: 233
 -- Data for Name: warehousemanager; Type: TABLE DATA; Schema: public; Owner: tova
 --
@@ -49507,7 +49576,7 @@ COPY public.warehousemanager (warehouseid, warehousemanager) FROM stdin;
 
 
 --
--- TOC entry 3404 (class 2606 OID 49212)
+-- TOC entry 3416 (class 2606 OID 49212)
 -- Name: ORDER ORDER_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49516,7 +49585,7 @@ ALTER TABLE ONLY public."ORDER"
 
 
 --
--- TOC entry 3390 (class 2606 OID 16515)
+-- TOC entry 3402 (class 2606 OID 16515)
 -- Name: applies_to applies_to_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49525,7 +49594,7 @@ ALTER TABLE ONLY public.applies_to
 
 
 --
--- TOC entry 3376 (class 2606 OID 16435)
+-- TOC entry 3388 (class 2606 OID 16435)
 -- Name: category category_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49534,7 +49603,7 @@ ALTER TABLE ONLY public.category
 
 
 --
--- TOC entry 3412 (class 2606 OID 49268)
+-- TOC entry 3424 (class 2606 OID 49268)
 -- Name: contains contains_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49543,7 +49612,7 @@ ALTER TABLE ONLY public.contains
 
 
 --
--- TOC entry 3394 (class 2606 OID 49177)
+-- TOC entry 3406 (class 2606 OID 49177)
 -- Name: deliverycompany deliverycompany_deliveryciename_key; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49552,7 +49621,7 @@ ALTER TABLE ONLY public.deliverycompany
 
 
 --
--- TOC entry 3396 (class 2606 OID 49179)
+-- TOC entry 3408 (class 2606 OID 49179)
 -- Name: deliverycompany deliverycompany_deliveryciephonenb_key; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49561,7 +49630,7 @@ ALTER TABLE ONLY public.deliverycompany
 
 
 --
--- TOC entry 3398 (class 2606 OID 49175)
+-- TOC entry 3410 (class 2606 OID 49175)
 -- Name: deliverycompany deliverycompany_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49570,7 +49639,7 @@ ALTER TABLE ONLY public.deliverycompany
 
 
 --
--- TOC entry 3410 (class 2606 OID 49253)
+-- TOC entry 3422 (class 2606 OID 49253)
 -- Name: deliverycompany_regionserved deliverycompany_regionserved_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49579,7 +49648,7 @@ ALTER TABLE ONLY public.deliverycompany_regionserved
 
 
 --
--- TOC entry 3386 (class 2606 OID 16491)
+-- TOC entry 3398 (class 2606 OID 16491)
 -- Name: discount discount_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49588,7 +49657,7 @@ ALTER TABLE ONLY public.discount
 
 
 --
--- TOC entry 3373 (class 2606 OID 16422)
+-- TOC entry 3385 (class 2606 OID 16422)
 -- Name: employee employee_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49597,7 +49666,7 @@ ALTER TABLE ONLY public.employee
 
 
 --
--- TOC entry 3384 (class 2606 OID 16471)
+-- TOC entry 3396 (class 2606 OID 16471)
 -- Name: inventory inventory_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49606,7 +49675,7 @@ ALTER TABLE ONLY public.inventory
 
 
 --
--- TOC entry 3414 (class 2606 OID 49289)
+-- TOC entry 3426 (class 2606 OID 49289)
 -- Name: located located_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49615,7 +49684,7 @@ ALTER TABLE ONLY public.located
 
 
 --
--- TOC entry 3406 (class 2606 OID 49229)
+-- TOC entry 3418 (class 2606 OID 49229)
 -- Name: product_kashrut product_kashrut_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49624,7 +49693,7 @@ ALTER TABLE ONLY public.product_kashrut
 
 
 --
--- TOC entry 3380 (class 2606 OID 16447)
+-- TOC entry 3392 (class 2606 OID 16447)
 -- Name: product product_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49633,7 +49702,7 @@ ALTER TABLE ONLY public.product
 
 
 --
--- TOC entry 3371 (class 2606 OID 16394)
+-- TOC entry 3383 (class 2606 OID 16394)
 -- Name: store store_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49642,7 +49711,7 @@ ALTER TABLE ONLY public.store
 
 
 --
--- TOC entry 3382 (class 2606 OID 16462)
+-- TOC entry 3394 (class 2606 OID 16462)
 -- Name: supplier supplier_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49651,7 +49720,7 @@ ALTER TABLE ONLY public.supplier
 
 
 --
--- TOC entry 3388 (class 2606 OID 16498)
+-- TOC entry 3400 (class 2606 OID 16498)
 -- Name: suppliered_by suppliered_by_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49660,7 +49729,7 @@ ALTER TABLE ONLY public.suppliered_by
 
 
 --
--- TOC entry 3400 (class 2606 OID 49195)
+-- TOC entry 3412 (class 2606 OID 49195)
 -- Name: truck truck_licenseplate_key; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49669,7 +49738,7 @@ ALTER TABLE ONLY public.truck
 
 
 --
--- TOC entry 3402 (class 2606 OID 49193)
+-- TOC entry 3414 (class 2606 OID 49193)
 -- Name: truck truck_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49678,7 +49747,7 @@ ALTER TABLE ONLY public.truck
 
 
 --
--- TOC entry 3392 (class 2606 OID 49165)
+-- TOC entry 3404 (class 2606 OID 49165)
 -- Name: warehouse warehouse_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49687,7 +49756,7 @@ ALTER TABLE ONLY public.warehouse
 
 
 --
--- TOC entry 3408 (class 2606 OID 49241)
+-- TOC entry 3420 (class 2606 OID 49241)
 -- Name: warehousemanager warehousemanager_pkey; Type: CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49696,7 +49765,7 @@ ALTER TABLE ONLY public.warehousemanager
 
 
 --
--- TOC entry 3374 (class 1259 OID 32769)
+-- TOC entry 3386 (class 1259 OID 32769)
 -- Name: idx_employee_full_name; Type: INDEX; Schema: public; Owner: tova
 --
 
@@ -49704,7 +49773,7 @@ CREATE INDEX idx_employee_full_name ON public.employee USING btree (firstname, l
 
 
 --
--- TOC entry 3377 (class 1259 OID 32770)
+-- TOC entry 3389 (class 1259 OID 32770)
 -- Name: idx_product_expiration; Type: INDEX; Schema: public; Owner: tova
 --
 
@@ -49712,7 +49781,7 @@ CREATE INDEX idx_product_expiration ON public.product USING btree (expirationdat
 
 
 --
--- TOC entry 3378 (class 1259 OID 32768)
+-- TOC entry 3390 (class 1259 OID 32768)
 -- Name: idx_product_name; Type: INDEX; Schema: public; Owner: tova
 --
 
@@ -49720,7 +49789,7 @@ CREATE INDEX idx_product_name ON public.product USING btree (productname);
 
 
 --
--- TOC entry 3424 (class 2606 OID 49218)
+-- TOC entry 3436 (class 2606 OID 49218)
 -- Name: ORDER ORDER_driverid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49729,7 +49798,7 @@ ALTER TABLE ONLY public."ORDER"
 
 
 --
--- TOC entry 3425 (class 2606 OID 49213)
+-- TOC entry 3437 (class 2606 OID 49213)
 -- Name: ORDER ORDER_storeid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49738,7 +49807,7 @@ ALTER TABLE ONLY public."ORDER"
 
 
 --
--- TOC entry 3421 (class 2606 OID 16521)
+-- TOC entry 3433 (class 2606 OID 16521)
 -- Name: applies_to applies_to_discountid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49747,7 +49816,7 @@ ALTER TABLE ONLY public.applies_to
 
 
 --
--- TOC entry 3422 (class 2606 OID 16516)
+-- TOC entry 3434 (class 2606 OID 16516)
 -- Name: applies_to applies_to_productid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49756,7 +49825,7 @@ ALTER TABLE ONLY public.applies_to
 
 
 --
--- TOC entry 3429 (class 2606 OID 49269)
+-- TOC entry 3441 (class 2606 OID 49269)
 -- Name: contains contains_orderid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49765,7 +49834,7 @@ ALTER TABLE ONLY public.contains
 
 
 --
--- TOC entry 3430 (class 2606 OID 49274)
+-- TOC entry 3442 (class 2606 OID 49274)
 -- Name: contains contains_productid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49774,7 +49843,7 @@ ALTER TABLE ONLY public.contains
 
 
 --
--- TOC entry 3428 (class 2606 OID 49254)
+-- TOC entry 3440 (class 2606 OID 49254)
 -- Name: deliverycompany_regionserved deliverycompany_regionserved_deliverycieid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49783,7 +49852,7 @@ ALTER TABLE ONLY public.deliverycompany_regionserved
 
 
 --
--- TOC entry 3415 (class 2606 OID 16423)
+-- TOC entry 3427 (class 2606 OID 16423)
 -- Name: employee employee_storeid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49792,7 +49861,7 @@ ALTER TABLE ONLY public.employee
 
 
 --
--- TOC entry 3417 (class 2606 OID 16477)
+-- TOC entry 3429 (class 2606 OID 16477)
 -- Name: inventory inventory_productid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49801,7 +49870,7 @@ ALTER TABLE ONLY public.inventory
 
 
 --
--- TOC entry 3418 (class 2606 OID 16472)
+-- TOC entry 3430 (class 2606 OID 16472)
 -- Name: inventory inventory_storeid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49810,7 +49879,7 @@ ALTER TABLE ONLY public.inventory
 
 
 --
--- TOC entry 3431 (class 2606 OID 49290)
+-- TOC entry 3443 (class 2606 OID 49290)
 -- Name: located located_productid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49819,7 +49888,7 @@ ALTER TABLE ONLY public.located
 
 
 --
--- TOC entry 3432 (class 2606 OID 49295)
+-- TOC entry 3444 (class 2606 OID 49295)
 -- Name: located located_warehouseid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49828,7 +49897,7 @@ ALTER TABLE ONLY public.located
 
 
 --
--- TOC entry 3416 (class 2606 OID 16448)
+-- TOC entry 3428 (class 2606 OID 16448)
 -- Name: product product_categoryid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49837,7 +49906,7 @@ ALTER TABLE ONLY public.product
 
 
 --
--- TOC entry 3426 (class 2606 OID 49230)
+-- TOC entry 3438 (class 2606 OID 49230)
 -- Name: product_kashrut product_kashrut_productid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49846,7 +49915,7 @@ ALTER TABLE ONLY public.product_kashrut
 
 
 --
--- TOC entry 3419 (class 2606 OID 16504)
+-- TOC entry 3431 (class 2606 OID 16504)
 -- Name: suppliered_by suppliered_by_productid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49855,7 +49924,7 @@ ALTER TABLE ONLY public.suppliered_by
 
 
 --
--- TOC entry 3420 (class 2606 OID 16499)
+-- TOC entry 3432 (class 2606 OID 16499)
 -- Name: suppliered_by suppliered_by_supplierid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49864,7 +49933,7 @@ ALTER TABLE ONLY public.suppliered_by
 
 
 --
--- TOC entry 3423 (class 2606 OID 49196)
+-- TOC entry 3435 (class 2606 OID 49196)
 -- Name: truck truck_deliverycieid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49873,7 +49942,7 @@ ALTER TABLE ONLY public.truck
 
 
 --
--- TOC entry 3427 (class 2606 OID 49242)
+-- TOC entry 3439 (class 2606 OID 49242)
 -- Name: warehousemanager warehousemanager_warehouseid_fkey; Type: FK CONSTRAINT; Schema: public; Owner: tova
 --
 
@@ -49881,11 +49950,11 @@ ALTER TABLE ONLY public.warehousemanager
     ADD CONSTRAINT warehousemanager_warehouseid_fkey FOREIGN KEY (warehouseid) REFERENCES public.warehouse(warehouseid) ON DELETE CASCADE;
 
 
--- Completed on 2026-05-20 09:18:34 UTC
+-- Completed on 2026-05-20 11:23:19 UTC
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BwMv0XUtpVesGUZIOovLhBQfAUAJsds0XGAcPV9QprJBjq72afascld5ot7RuE2
+\unrestrict WZavI6HepMffaHXAU1wNWydXrTQ7y5ZgXldiw1LNKY77CeCPSywp4NkBDcxrVWH
 
