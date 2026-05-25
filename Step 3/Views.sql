@@ -22,6 +22,9 @@ LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID AND e.Status = 'Active'
 LEFT JOIN INVENTORY i ON s.StoreID = i.StoreID
 GROUP BY s.StoreID, s.StoreName, s.Region, s.Rating;
 
+select *
+from v_store_operational_summary;
+
 -- ---------------------------------------------------------------------
 -- שאילתא 1 על מבט 1: איתור חנויות מצטיינות
 -- הסבר: שולף חנויות מובילות שקיבלו את הציון המקסימלי (Rating 5) כדי לנתח את מאפייניהן.
@@ -68,6 +71,9 @@ FROM DELIVERYCOMPANY dc
 LEFT JOIN TRUCK t ON dc.DeliveryCieID = t.DeliveryCieID AND t.Active = 1
 LEFT JOIN "ORDER" o ON t.DriverID = o.DriverID
 GROUP BY dc.DeliveryCieID, dc.DeliveryCieName, dc.DeliveryCiePhoneNb;
+
+select *
+from v_delivery_performance_summary;
 
 -- ---------------------------------------------------------------------
 -- שאילתא 1 על מבט 2: דירוג פיננסי של חברות השילוח
@@ -119,6 +125,9 @@ JOIN CONTAINS c ON o.OrderId = c.OrderId
 JOIN PRODUCT p ON c.ProductID = p.ProductID
 JOIN LOCATED l ON p.ProductID = l.ProductID
 JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID;
+
+select *
+from v_integrated_supply_chain;
 
 -- ---------------------------------------------------------------------
 -- שאילתא 1 על מבט 3: הפקת רשימת ליקוט למחסנאים

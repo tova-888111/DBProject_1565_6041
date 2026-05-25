@@ -282,7 +282,7 @@ SELECT
     s.StoreID AS store_id,                       -- המספר המזהה של החנות
     s.StoreName AS store_name,                   -- שם סניף החנות
     s.Region AS store_region,                    -- האזור הגיאוגרפי של הסניף
-    s.Rating AS store_rating,                    -- דירוג החנות (1 עד 5)
+    s.Rating AS store_rating,                    -- דירוג החנות
     COUNT(DISTINCT e.EmployeeID) AS total_employees, -- כמות העובדים הפעילים בסניף
     COALESCE(SUM(e.Salary), 0) AS monthly_payroll, -- סך תקציב השכר החודשי של הסניף
     COUNT(DISTINCT i.ProductID) AS unique_products, -- מספר המוצרים השונים שיש לחנות במלאי
@@ -294,6 +294,8 @@ GROUP BY s.StoreID, s.StoreName, s.Region, s.Rating;
 ```
 
 ![הרצת מבט 1](images/view1.png)
+
+![הרצת מבט 1](images/selectView1.png)
 
  ##  שאילתות על מבט 1  
 
@@ -359,6 +361,8 @@ GROUP BY dc.DeliveryCieID, dc.DeliveryCieName, dc.DeliveryCiePhoneNb;
 ```
 
 ![הרצת מבט 2](images/view2.png)
+
+![הרצת מבט 2](images/selectView2.png)
 
  ##  שאילתות על מבט 2  
 
@@ -428,6 +432,8 @@ JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID;
 ```
 
 ![הרצת מבט 3](images/view3.png)
+
+![הרצת מבט 3](images/selectView3.png)
 
  ##  שאילתות על מבט 3  
 
