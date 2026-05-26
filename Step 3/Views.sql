@@ -155,3 +155,15 @@ SELECT
 FROM v_integrated_supply_chain
 GROUP BY warehouse_number
 ORDER BY warehouse_number DESC;
+
+-- עדינה ביקשה מטובה בהגנה 3
+select *
+from v_delivery_performance_summary v join DELIVERYCOMPANY_REGIONSERVED d on v.company_id=d.DeliveryCieID; 
+
+
+-- עדינה ביקשה מנעמי בהגנה 3
+SELECT item_name, SUM(ordered_quantity) AS totalThatOrderd
+FROM v_integrated_supply_chain 
+GROUP BY item_name
+ORDER BY totalThatOrderd DESC
+LIMIT 1;
