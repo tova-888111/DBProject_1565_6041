@@ -232,8 +232,7 @@ $$ LANGUAGE plpgsql;
 ## ▶️ הפעלת הפונקציה
 
 ```sql
---הרצה
-SELECT calculate_order_price(1);
+;SELECT calculate_order_price(1)
 ```
 
 ---
@@ -269,11 +268,12 @@ SELECT calculate_order_price(1);
 ## 💻 קוד הפרוצדורה
 
 ```sql
---הפרוצדורה- מורידה באחוזים מחיר של מוצרים שתוקפם עומד לפוג
+
 CREATE OR REPLACE PROCEDURE discount_near_expiration_products(
     p_days_ahead INT,
     p_discount_percent NUMERIC
 )
+
 LANGUAGE plpgsql
 AS $$
 /**
@@ -283,6 +283,7 @@ AS $$
  * * אלמנטים ממומשים: Implicit Cursor (סמן משתמע), FOR LOOP (לולאת סמן), 
  * RECORD (רשומה), IF (הסתעפות לוגית), UPDATE (פקודת DML), Exception Handling (טיפול בשגיאות).
  */
+
 DECLARE
     -- [1] דרישה: שימוש ברשומה (RECORD) זמנית לקליטת נתוני השורות בתוך הלולאה
     r_product RECORD;
@@ -295,7 +296,7 @@ BEGIN
         RAISE EXCEPTION 'שגיאה: מספר הימים חייב להיות חיובי';
     END IF;
 
-    -- [3] דרישה: מבנה תנאי (IF) - ולידציה על תקינות אחוז ההנחה (חייב להיות בין 0 ל-100)
+     -- [3] דרישה: מבנה תנאי (IF) - ולידציה על תקינות אחוז ההנחה (חייב להיות בין 0 ל-100)
     IF p_discount_percent IS NULL OR p_discount_percent <= 0 OR p_discount_percent >= 100 THEN
         RAISE EXCEPTION 'שגיאה: אחוז ההנחה חייב להיות בין 0 ל-100';
     END IF;
@@ -308,7 +309,8 @@ BEGIN
         WHERE ExpirationDate::DATE BETWEEN CURRENT_DATE 
                                       AND CURRENT_DATE + p_days_ahead
     LOOP
-        -- חישוב המחיר החדש לאחר הפחתת אחוז ההנחה שקיבלנו כפרמטר
+
+            -- חישוב המחיר החדש לאחר הפחתת אחוז ההנחה שקיבלנו כפרמטר
         v_new_price := r_product.Price * (1 - p_discount_percent / 100.0);
 
         -- [5] דרישה: ביצוע פקודת DML (UPDATE) - עדכון המחיר החדש ישירות בטבלת המוצרים
@@ -327,7 +329,7 @@ BEGIN
             v_new_price;
     END LOOP;
 
-    -- בדיקה מסכמת: הדפסת פלט מותאם לפי תוצאות הרצת הלולאה
+        -- בדיקה מסכמת: הדפסת פלט מותאם לפי תוצאות הרצת הלולאה
     IF v_counter = 0 THEN
         RAISE NOTICE 'לא נמצאו מוצרים שתוקפם פג בטווח של % ימים.', p_days_ahead;
     ELSE
@@ -391,9 +393,9 @@ ALTER TABLE "ORDER" ADD COLUMN Status VARCHAR(20) DEFAULT 'PENDING';
 ## 💻 קוד הפרוצדורה
 
 ```sql
---הפרוצדורה
 CREATE OR REPLACE PROCEDURE complete_order_and_update_stock(p_order_id INT)
 LANGUAGE plpgsql
+
 AS $$
 /**
  * פרויקט בסיסי נתונים - שלב ד' - תכנות PL/pgSQL
@@ -417,7 +419,7 @@ BEGIN
         RAISE EXCEPTION 'שגיאה: הזמנה מספר % לא קיימת במערכת.', p_order_id;
     END IF;
 
-    -- בדיקה ב': מניעת הרצה כפולה - האם ההזמנה כבר טופלה ונקלטה בעבר?
+        -- בדיקה ב': מניעת הרצה כפולה - האם ההזמנה כבר טופלה ונקלטה בעבר?
     IF v_current_status = 'COMPLETED' THEN
         RAISE EXCEPTION 'שגיאה: הזמנה מספר % כבר סומנה כ-COMPLETED. המלאי בחנות כבר עודכן.', p_order_id;
     END IF;
@@ -429,7 +431,7 @@ BEGIN
 
     RAISE NOTICE 'סטטוס ההזמנה % עודכן בהצלחה ל-COMPLETED.', p_order_id;
 
-    -- 3. שימוש ב-Implicit Cursor לריצה על כל המוצרים והכמויות שנמצאים בתוך ההזמנה הזו
+        -- 3. שימוש ב-Implicit Cursor לריצה על כל המוצרים והכמויות שנמצאים בתוך ההזמנה הזו
     FOR r_item IN 
         SELECT ProductID, Quantity 
         FROM CONTAINS 
@@ -452,6 +454,7 @@ BEGIN
         END IF;
     END LOOP;
 
+    
     RAISE NOTICE 'תהליך קליטת המשלוח ועדכון המלאי עבור הזמנה % הסתיים בהצלחה.', p_order_id;
 
 EXCEPTION
