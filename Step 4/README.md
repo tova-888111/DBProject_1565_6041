@@ -232,7 +232,7 @@ $$ LANGUAGE plpgsql;
 ## ▶️ הפעלת הפונקציה
 
 ```sql
-;SELECT calculate_order_price(1)
+SELECT calculate_order_price(1);
 ```
 
 ---
