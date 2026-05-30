@@ -13,7 +13,9 @@
 * **מערך ספקים:** ניהול רכש מול ספקים חיצוניים.
 * **ניהול עובדים:** מצבת כוח אדם ושכר.
 
-> [🔗 לינק לאפליקציה ב-AI Studio](https://ai.studio/apps/954fde94-4343-4ac8-abde-e5b1d80ae363)
+> [🔗 לינק ל PROMPT ב-AI Studio](https://ai.studio/apps/954fde94-4343-4ac8-abde-e5b1d80ae363)
+
+> [🔗 לינק לאפליקציה ב-AI Studio](https://remix-remix-259174463952.europe-west1.run.app)
 
 ![לוח בקרה רשתי](images/aistudio1.png)
 
