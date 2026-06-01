@@ -9,23 +9,26 @@ DECLARE
     -- משתנה לקביעת מספר ההזמנה שנטפל בה (ניתן לשנות לכל מזהה קיים אצלכם)
     v_target_order_id INT := 1;
     
+    -- משתנה לקביעת אחוז הרכש הסיטונאי מהספק (התווסף בעקבות שינוי הפונקציה)
+    v_wholesale_pct NUMERIC := 65.00;
+    
     -- משתנה לקליטת המחיר הסופי שיוחזר מהפונקציה
     v_calculated_final_price NUMERIC(10,2);
 BEGIN
     RAISE NOTICE '=== תחילת ריצת תוכנית ראשית 2: קליטת משלוח וחישוב מחיר ===';
 
-    -- [א] זימון פרוצדורה מספר 3: עדכון סטטוס ההזמנה ל-COMPLETED וקליטת מלאי ב-INVENTORY
+    -- [א] זימון פרוצדורה מספר 2: עדכון סטטוס ההזמנה ל-COMPLETED וקליטת מלאי ב-INVENTORY
     RAISE NOTICE '--- שלב 1: מפעיל פרוצדורה לקליטת המשלוח ועדכון המלאי בחנות ---';
     CALL complete_order_and_update_stock(v_target_order_id);
 
-    -- [ב] זימון פונקציה מספר 2: חישוב המחיר הסופי המעודכן ושמירתו במשתנה המקומי
+    -- [ב] זימון פונקציה מספר 2: חישוב המחיר הסיטונאי המעודכן ושמירתו במשתנה (הועברו 2 פרמטרים!)
     RAISE NOTICE '--- שלב 2: מפעיל פונקציה לחישוב המחיר המשוקלל הסופי של ההזמנה ---';
-    v_calculated_final_price := calculate_order_price(v_target_order_id);
+    v_calculated_final_price := calculate_order_price(v_target_order_id, v_wholesale_pct);
 
     -- הדפסת סיכום התהליך
     RAISE NOTICE '--- שלב 3: סיכום תוצאות הריצה ---';
-    RAISE NOTICE 'התהליך הושלם במלואו! הזמנה מספר % נסגרה. המחיר שסונכרן בטבלה: % ש"ח.',
-        v_target_order_id, v_calculated_final_price;
+    RAISE NOTICE 'התהליך הושלם במלואו! הזמנה מספר % נסגרה. המחיר הסיטונאי שסונכרן בטבלה (% אחוז מהמחירון): % ש"ח.',
+        v_target_order_id, v_wholesale_pct, v_calculated_final_price;
 
     RAISE NOTICE '=== תוכנית ראשית 2 הסתיימה בהצלחה ===';
 

@@ -15,7 +15,7 @@ DECLARE
 BEGIN
     RAISE NOTICE '=== תחילת ריצת תוכנית ראשית 1: עדכון פחת והצגת מבצעים ===';
 
-    -- [א] זימון פרוצדורה מספר 2: החלת 15% הנחה על מוצרים הפגים בעוד 45 ימים
+    -- [א] זימון פרוצדורה מספר 1: החלת 15% הנחה על מוצרים הפגים בעוד 45 ימים
     RAISE NOTICE '--- שלב 1: מפעיל פרוצדורת הנחת מוצרים קרובים לתפוגה ---';
     CALL discount_near_expiration_products(45, 15.00);
 
@@ -31,10 +31,12 @@ BEGIN
         -- תנאי יציאה: כאשר נגמרו השורות בסמן
         EXIT WHEN NOT FOUND;
 
-        -- הדפסת הנתונים לחלונית ה-Messages
-        RAISE NOTICE 'מבצע: "%" (%%% הנחה) תקף על המוצר: "%" [טווח: % עד %]',
+        -- התיקון כאן: הדפסה תקינה ללא כפל אחוזים + שילוב ה-IDs החדשים שהוספנו לפונקציה
+        RAISE NOTICE 'מבצע מספר %: "%" (% אחוז הנחה) תקף על מוצר %: "%" [טווח: % עד %]',
+            r_discount_row.DiscountID,
             r_discount_row.DiscountName,
             r_discount_row.DiscountPercentage,
+            r_discount_row.ProductID,
             r_discount_row.ProductName,
             r_discount_row.StartDate,
             r_discount_row.EndDate;

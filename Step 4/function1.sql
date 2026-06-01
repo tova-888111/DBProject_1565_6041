@@ -22,8 +22,10 @@ BEGIN
 
     -- [2] דרישה: פתיחת ה-Cursor (Explicit Cursor Opening) עבור שאילתה מורכבת
     OPEN discount_cursor FOR
-        SELECT d.DiscountName, 
-               d.DiscountPercentage, 
+        SELECT d.DiscountID,
+               d.DiscountName, 
+               d.DiscountPercentage,
+               p.ProductID, 
                p.ProductName, 
                d.StartDate, 
                d.EndDate
