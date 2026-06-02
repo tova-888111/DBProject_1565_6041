@@ -1,3 +1,20 @@
+-- א. בדיקת הסטטוס והמחיר של ההזמנה
+SELECT OrderId, Price, Status 
+FROM "ORDER" 
+WHERE OrderId = 2;
+
+SELECT 
+    o.OrderId,
+    o.StoreID,
+    c.ProductID,                        -- שינוי קטן: שליפה מטבלת c כדי שה-ID יופיע גם אם אין מלאי
+    c.Quantity AS Ordered_Quantity, 
+    COALESCE(i.Quantity, 0) AS Current_Stock_In_Store -- הפיכת NULL ל-0 בזמן אמת
+FROM "ORDER" o
+JOIN CONTAINS c ON o.OrderId = c.OrderId
+LEFT JOIN INVENTORY i ON o.StoreID = i.StoreID AND c.ProductID = i.ProductID
+WHERE o.OrderId = 2;
+
+
 DO $$
 /**
  * פרויקט בסיסי נתונים - שלב ד' - תכנות תוכנית ראשית מספר 2
@@ -7,7 +24,7 @@ DO $$
  */
 DECLARE
     -- משתנה לקביעת מספר ההזמנה שנטפל בה (ניתן לשנות לכל מזהה קיים אצלכם)
-    v_target_order_id INT := 1;
+    v_target_order_id INT := 2;
     
     -- משתנה לקביעת אחוז הרכש הסיטונאי מהספק (התווסף בעקבות שינוי הפונקציה)
     v_wholesale_pct NUMERIC := 65.00;

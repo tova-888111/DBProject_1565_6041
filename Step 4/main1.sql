@@ -1,3 +1,8 @@
+SELECT ProductID, ProductName, Price, ExpirationDate
+FROM PRODUCT
+WHERE ExpirationDate::DATE BETWEEN CURRENT_DATE AND CURRENT_DATE + 45;
+
+
 DO $$
 /**
  * פרויקט בסיסי נתונים - שלב ד' - תוכנית ראשית מספר 1
@@ -47,3 +52,7 @@ BEGIN
 
     RAISE NOTICE '=== תוכנית ראשית 1 הסתיימה בהצלחה ===';
 END $$;
+
+SELECT ProductID, ProductName, Price, ExpirationDate
+FROM PRODUCT
+WHERE ExpirationDate::DATE BETWEEN CURRENT_DATE AND CURRENT_DATE + 45;
