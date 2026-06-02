@@ -694,7 +694,15 @@ END $$;
 
 ## ✅ הוכחת תקינות
 
-![ ](images/main1.png)
+![ ](images/main1_1.png)
+
+![ ](images/main1_2.png)
+
+![ ](images/main1_3.png)
+
+![ ](images/main1_4.png)
+
+![ ](images/main1_5.png)
 
 ---
 
@@ -723,7 +731,7 @@ DO $$
  */
 DECLARE
     -- משתנה לקביעת מספר ההזמנה שנטפל בה (ניתן לשנות לכל מזהה קיים אצלכם)
-    v_target_order_id INT := 1;
+    v_target_order_id INT := 2;
     
     -- משתנה לקביעת אחוז הרכש הסיטונאי מהספק (התווסף בעקבות שינוי הפונקציה)
     v_wholesale_pct NUMERIC := 65.00;
@@ -760,10 +768,18 @@ END $$;
 
 ## ✅ הוכחת תקינות
 
-![ ](images/main2.png)
+![ ](images/main2_1.png)
+
+![ ](images/main2_2.png)
+
+![ ](images/main2_3.png)
+
+![ ](images/main2_4.png)
+
+![ ](images/main2_5.png)
 ---
 
 
 
 # חלק 5: גיבוי
-
+### גיבוי בסיס הנתונים בקובץ backup4_2_6_2026.sql .
