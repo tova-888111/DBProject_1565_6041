@@ -81,7 +81,6 @@ class RamiLeviApp(ctk.CTk):
 
         self.buttons = {}
         
-        # כפתורי הניווט קוראים עכשיו לפונקציית מעבר מהירה ומאובטחת
         self.create_sidebar_button("dashboard", "📊   לוח בקרה רשתי", lambda: self.switch_view("dashboard"))
         self.create_sidebar_button("stores", "🏪   ניהול סניפים", lambda: self.switch_view("stores"))
         self.create_sidebar_button("employees", "👥   ניהול עובדים", lambda: self.switch_view("employees"))
@@ -102,44 +101,45 @@ class RamiLeviApp(ctk.CTk):
         self.user_role.pack(padx=18, fill="x")
 
         # -------------------------------------------------------------
-        # 2. מנגנון גלילה חכם ומותנה
+        # 2. ✨ מנגנון גלילה אנכי קבוע, יציב ומיושר למרכז (ללא תזוזה שמאלה)
         # -------------------------------------------------------------
         self.left_container = ctk.CTkFrame(self, fg_color="#F3F4F6", corner_radius=0)
         self.left_container.pack(side="left", fill="both", expand=True)
 
+        # יצירת ה-Canvas לקבלת גלילה למעלה ולמטה
         self.canvas = Canvas(self.left_container, bg="#F3F4F6", highlightthickness=0)
-        self.scrollbar = ctk.CTkScrollbar(self.left_container, orientation="vertical", command=self.canvas.yview)
         
+        # סרגל גלילה אנכי בלבד (ממוקם בצד שמאל הקיצוני)
+        self.v_scrollbar = ctk.CTkScrollbar(self.left_container, orientation="vertical", command=self.canvas.yview)
+        self.v_scrollbar.pack(side="left", fill="y")
+
         # המכולה הראשית שמחזיקה את כל המסכים
         self.views_container = ctk.CTkFrame(self.canvas, fg_color="#F3F4F6", corner_radius=0)
         
+        # חיבור המכולה לתוך חלון ה-Canvas
         self.canvas.create_window((0, 0), window=self.views_container, anchor="nw", tags="self.views_container")
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.canvas.configure(yscrollcommand=self.v_scrollbar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
 
+        # מאזינים דינמיים לווידוא שהתוכן נמתח על כל רוחב המסך ומעדכן את גבולות הגלילה האנכית
         self.views_container.bind("<Configure>", self.update_scroll_region)
         self.canvas.bind("<Configure>", self.respond_to_canvas_resize)
 
-        # -------------------------------------------------------------
-        # ✨ מילון לאחסון המסכים הטעונים מראש (View Caching)
-        # -------------------------------------------------------------
+        # מילון לאחסון המסכים הטעונים מראש (View Caching)
         self.loaded_views = {}
         self.current_active_key = None
 
-        # טעינה ראשונית חלקה של עמוד הבית
+        # טעינה ראשונית חלקה ומיידית של עמוד הבית
         self.switch_view("dashboard")
 
     def update_scroll_region(self, event=None):
+        """מעדכן את גבולות הגלילה הווירטואליים לפי גובה התוכן האמיתי בלשונית"""
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def respond_to_canvas_resize(self, event):
+        """מותח את מכולת המסכים באופן מלא וממורכז לרוחב ה-Canvas הנוכחי"""
         canvas_width = event.width
         self.canvas.itemconfig("self.views_container", width=canvas_width)
-        
-        if self.views_container.winfo_reqheight() > event.height:
-            self.scrollbar.pack(side="right", fill="y")
-        else:
-            self.scrollbar.pack_forget()
 
     def create_sidebar_button(self, key, text, command):
         btn = ctk.CTkButton(
@@ -158,26 +158,19 @@ class RamiLeviApp(ctk.CTk):
             else:
                 btn.configure(fg_color="transparent", text_color="#94A3B8", font=("Segoe UI", 15))
 
-    # -------------------------------------------------------------
-    # ✨ הפונקציה החדשה למעבר מסכים מיידי ללא השהיה (0ms Delay)
-    # -------------------------------------------------------------
     def switch_view(self, key):
-        """מסתירה את המסך הנוכחי ומציגה את המסך המבוקש בלחיצה, טוענת רק פעם אחת"""
+        """מסתירה את המסך הנוכחי ומציגה את המסך המבוקש, טוענת רק פעם אחת מהזיכרון"""
         if self.current_active_key == key:
-            return  # לחיצה מחדש על הלשונית הפעילה - אין צורך לעשות כלום
+            return  
 
         self.set_active_button(key)
 
-        # 1. הסתרת המסך הפעיל הנוכחי (אם קיים) מבלי למחוק אותו מהזיכרון
         if self.current_active_key and self.current_active_key in self.loaded_views:
             self.loaded_views[self.current_active_key].pack_forget()
 
-        # 2. אם המסך המבוקש עדיין לא נוצר מעולם - נייצר אותו פעם אחת עכשיו
         if key not in self.loaded_views:
-            # יצירת פריים ייעודי מבודד עבור הלשונית הזו
             frame_view = ctk.CTkFrame(self.views_container, fg_color="#F3F4F6", corner_radius=0)
             
-            # בניית התוכן של הלשונית בתוך הפריים החדש (קורא לקבצים החיצוניים שלך)
             if key == "dashboard":
                 show_dashboard_view(frame_view)
             elif key == "stores":
@@ -195,15 +188,14 @@ class RamiLeviApp(ctk.CTk):
             elif key == "discounts":
                 show_discounts_view(frame_view)
                 
-            # שמירת המסך הבנוי במילון הזיכרון
             self.loaded_views[key] = frame_view
 
-        # 3. הצגת המסך המבוקש (הוא עולה מיידית כי הוא כבר בנוי או נשלף מהזיכרון)
         self.loaded_views[key].pack(fill="both", expand=True)
-        
-        # עדכון מפתח המסך הנוכחי ועדכון סרגל הגלילה במידת הצורך
         self.current_active_key = key
+        
+        # ריענון גבולות והחזרת הגלילה לראש העמוד בעת החלפת לשונית
         self.update_scroll_region()
+        self.canvas.yview_moveto(0)
 
 if __name__ == "__main__":
     app = RamiLeviApp()

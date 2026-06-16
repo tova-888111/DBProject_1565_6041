@@ -12,14 +12,62 @@ def show_dashboard_view(main_frame):
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    # --- כותרת עליונה רחבה וברורה ---
-    header_label = ctk.CTkLabel(main_frame, text="לוח בקרה רשתי", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
-    header_label.pack(pady=(30, 2), padx=35, fill="x")
+    # --- 1. כותרת עליונה רחבה ונשייה (מנופחת ועשירה) ---
+    header_label = ctk.CTkLabel(
+        main_frame, 
+        text="לוח בקרה רשתי", 
+        font=("Segoe UI", 32, "bold"), 
+        text_color="#111827", 
+        anchor="e"
+    )
+    header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="סקירה כללית של כל פעילות הרשת בזמן אמת", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 30), padx=35, fill="x")
+    sub_header = ctk.CTkLabel(
+        main_frame, 
+        text="סקירה כללית של כל פעילות הרשת בזמן אמת", 
+        font=("Segoe UI", 14, "bold"), 
+        text_color="#4B5563", 
+        anchor="e"
+    )
+    sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
-    # --- שורת הכרטיסיות העליונה (הקופסאות המעוגלות) ---
+    # --- ✨ 2. שדרוג ועיצוב: תיבת אודות בצבע של סרגל הצד (#030712) עם שורות מפורקות למניעת היפוך ---
+    about_frame = ctk.CTkFrame(main_frame, fg_color="#030712", corner_radius=18)
+    about_frame.pack(pady=(0, 25), padx=37, fill="x")
+    
+    about_title = ctk.CTkLabel(
+        about_frame, 
+        text="💡  אודות הרשת ואתר הניהול המרכזי", 
+        font=("Segoe UI", 16, "bold"), 
+        text_color="#FFFFFF", # טקסט לבן בולט על רקע כהה
+        anchor="e"
+    )
+    about_title.pack(fill="x", padx=30, pady=(20, 10))
+    
+    # פירוק המלל למשפטים קצרים בנפרד כדי לחסום לחלוטין את באג היפוך השורות של tkinter
+    sentences = [
+        " רשת רמי לוי שיווק השקמה היא מרשתות המזון והקמעונאות המובילות והמשפיעות ביותר בישראל•",
+        " הרשת חורטת על דגלה מתן שירות איכותי, יעיל, ומחירים הוגנים ומשתלמים לצרכן הישראלי•",
+        " אתר ניהול מטה זה פותח במטרה לספק מענה טכנולוגי מתקדם ואינטראקטיבי לפיקוח על זרועות הרשת•",
+        " הפורטל מאפשר לבצע סנכרון מלא של מלאי הסניפים, לעקוב אחר תנועות משאיות ההפצה ולנהל כוח אדם•"
+    ]
+    
+    # יצירת אלמנט נפרד לכל שורה - מבטיח יישור מושלם מימין לשמאל ללא חיתוכי מילים
+    for sentence in sentences:
+        lbl = ctk.CTkLabel(
+            about_frame,
+            text=sentence,
+            font=("Segoe UI", 13, "bold"),
+            text_color="#F3F4F6", # צבע בהיר קריא ונקי
+            anchor="e",
+            justify="right"
+        )
+        lbl.pack(fill="x", padx=30, pady=3)
+        
+    # מרווח תחתון קל לסגירת הפריים הכהה
+    ctk.CTkLabel(about_frame, text="", height=10).pack()
+
+    # --- 3. שורת הכרטיסיות (הסטטיסטיקות) ---
     cards_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     cards_frame.pack(padx=25, fill="x")
 
@@ -35,25 +83,20 @@ def show_dashboard_view(main_frame):
     if conn:
         cursor = conn.cursor()
         try:
-            # 1. ספירת סך כל העובדים ברשת
             cursor.execute("SELECT COUNT(*) FROM EMPLOYEE;")
             total_employees = cursor.fetchone()[0]
             
-            # 2. ספירת סך כל הסניפים הפעילים
             cursor.execute("SELECT COUNT(*) FROM STORE;")
             total_stores = cursor.fetchone()[0]
             
-            # 3. חישוב ערך מלאי אמיתי דינמי
             cursor.execute("SELECT SUM(i.Quantity * p.Price) FROM INVENTORY i JOIN PRODUCT p ON i.ProductID = p.ProductID;")
             res_val = cursor.fetchone()[0]
             total_inventory_value = float(res_val) if res_val else 0.0
 
-            # 4. חישוב סך כל פריטי המלאי ברשת
             cursor.execute("SELECT SUM(Quantity) FROM INVENTORY;")
             res_qty = cursor.fetchone()[0]
             total_items_quantity = int(res_qty) if res_qty else 0
 
-            # 5. ספירת חריגות בשביל קוביות הסטטוס התחתונות
             cursor.execute("SELECT COUNT(*) FROM INVENTORY WHERE Quantity <= MinimumStock AND Quantity > 0;")
             low_stock_count = cursor.fetchone()[0]
             cursor.execute("SELECT COUNT(*) FROM INVENTORY WHERE Quantity = 0;")
@@ -68,28 +111,27 @@ def show_dashboard_view(main_frame):
     formatted_value = f"₪{int(total_inventory_value):,}"
     formatted_items = f"{total_items_quantity:,}"
 
-    # יצירת 4 כרטיסיות
+    # יצירת 4 כרטיסיות הסטטיסטיקה
     create_card(cards_frame, "👥  סה\"ך עובדים ברשת", f"{total_employees}", "#E0F2FE")
     create_card(cards_frame, "🏪  סניפים פעילים", f"{total_stores}", "#E8F5E9")
     create_card(cards_frame, "📦  ערך מלאי נוכחי", formatted_value, "#EFF6FF")
     create_card(cards_frame, "📊  סך מלאי ברשת (פריטים)", formatted_items, "#FEE2E2")
 
-    # --- פאנל תחתון מפוצל ---
+    # --- 4. פאנל תחתון מפוצל (גרף + התראות) ---
     bottom_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
-    bottom_frame.pack(pady=25, padx=25, fill="both", expand=True)
+    bottom_frame.pack(pady=(20, 20), padx=25, fill="x")
 
-    # 1. קוביית גרף פיזור מלאי לפי אזורים (צד ימין של המסך)
+    # קוביית גרף פיזור מלאי לפי אזורים (צד ימין של המסך)
     graph_container = ctk.CTkFrame(bottom_frame, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
-    graph_container.pack(side="right", fill="both", expand=True, padx=12, pady=10)
+    graph_container.pack(side="right", fill="both", expand=True, padx=12, pady=5)
     
     ctk.CTkLabel(graph_container, text="פיזור סניפים לפי אזורים", font=("Segoe UI", 18, "bold"), text_color="#111827", anchor="e").pack(pady=(20, 5), padx=25, fill="x")
     
-    # בניית הגרף בפועל מתוך נתוני STORE
     build_regions_graph(graph_container)
 
-    # 2. קוביית סיכום התראות (צד שמאל של המסך)
-    alerts_wrapper = ctk.CTkFrame(bottom_frame, fg_color="#FFFFFF", width=380, corner_radius=18, border_color="#E5E7EB", border_width=1)
-    alerts_wrapper.pack(side="left", fill="both", padx=12, pady=10)
+    # קוביית סיכום התראות (צד שמאל של המסך)
+    alerts_wrapper = ctk.CTkFrame(bottom_frame, fg_color="#FFFFFF", width=380, height=340, corner_radius=18, border_color="#E5E7EB", border_width=1)
+    alerts_wrapper.pack(side="left", fill="both", padx=12, pady=5)
     alerts_wrapper.pack_propagate(False)
     
     ctk.CTkLabel(alerts_wrapper, text="⚠️  סטטוס חריגות מלאי", font=("Segoe UI", 18, "bold"), text_color="#DC2626", anchor="e").pack(pady=20, padx=25, fill="x")
@@ -97,7 +139,7 @@ def show_dashboard_view(main_frame):
     create_summary_box(
         alerts_wrapper, 
         title="חוסר קריטי ברשת", 
-        value=f"{out_of_stock_count} מוצרים", 
+        value=f"מוצרים-{out_of_stock_count}", 
         desc="פריטים שאזלו לחלוטין מהמלאי ודורשים הזמנה מיידית מהספק", 
         bg_color="#FEF2F2", 
         text_color="#991B1B"
@@ -106,11 +148,19 @@ def show_dashboard_view(main_frame):
     create_summary_box(
         alerts_wrapper, 
         title="מתחת לסף מינימום", 
-        value=f"{low_stock_count} מוצרים", 
+        value=f"מוצרים-{low_stock_count}", 
         desc="פריטים שהגיעו לקו האדום של המלאי שהוגדר בסניף", 
         bg_color="#FFFBEB", 
         text_color="#92400E"
     )
+
+    # אילוץ המערכת הגרפית לחשב ולייצב את המיקומים והגלילה מיד
+    try:
+        main_frame.update_idletasks()
+        main_frame.winfo_toplevel().update()
+    except:
+        pass
+
 
 def create_card(parent, title, value, icon_bg):
     card = ctk.CTkFrame(parent, fg_color="#FFFFFF", height=120, width=220, corner_radius=18, border_color="#E5E7EB", border_width=1)
@@ -188,7 +238,7 @@ def build_regions_graph(parent_frame):
                     ha='center', va='bottom', fontsize=10, color='#111827', weight='bold')
 
     canvas = FigureCanvasTkAgg(fig, master=parent_frame)
-    canvas_widget = canvas.get_tk_widget() # תוקן סופית ל-get_tk_widget()
+    canvas_widget = canvas.get_tk_widget()
     canvas_widget.config(bg='#FFFFFF', highlightthickness=0)
     canvas_widget.pack(fill="both", expand=True, padx=20, pady=(10, 20))
     canvas.draw()

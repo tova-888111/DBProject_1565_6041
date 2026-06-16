@@ -9,17 +9,17 @@ def show_stores_view(main_frame):
         widget.destroy()
 
     # --- כותרת עליונה ---
-    header_label = ctk.CTkLabel(main_frame, text="ניהול סניפי הרשת", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
-    header_label.pack(pady=(30, 2), padx=35, fill="x")
+    header_label = ctk.CTkLabel(main_frame, text="ניהול סניפי הרשת", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
+    header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ומחיקה של סניפים פעילים במערכת", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 15), padx=35, fill="x")
+    sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ומחיקה של סניפים פעילים במערכת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
+    sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
     # --- שורת חיפוש עליונה ---
     search_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     search_frame.pack(padx=35, fill="x", pady=(0, 15))
     
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍  חיפוש סניף לפי שם", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍   חיפוש סניף לפי שם", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 0))
     
     search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף לחיפוש...", font=("Segoe UI", 13), width=280, height=35, corner_radius=8, justify="right")
@@ -28,15 +28,11 @@ def show_stores_view(main_frame):
     # הפעלת חיפוש בזמן אמת בעת הקלדה
     search_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_entry.get().strip()))
 
-    # --- שורת כפתורי פעולה ---
+    # --- ✨ החזרה למקום המקורי: שורת כפתורי פעולה מתחת לחיפוש ---
     action_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     action_frame.pack(padx=35, fill="x", pady=(0, 15))
 
-    # כפתור רענון ומחיקת החיפוש
-    refresh_btn = ctk.CTkButton(action_frame, text="🔄   רענן נתונים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=40, corner_radius=10, 
-                             command=lambda: [search_entry.delete(0, tk.END), refresh_table(tree)])
-    refresh_btn.pack(side="left", padx=5)
-
+    # כפתור הוספת סניף חזר למיקומו המקורי בצד ימין (כפתור הרענון הוסר בהצלחה)
     add_btn = ctk.CTkButton(action_frame, text="➕   הוספת סניף חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=160, height=40, corner_radius=10, command=lambda: open_store_modal(tree))
     add_btn.pack(side="right", padx=5)
 
@@ -65,10 +61,12 @@ def show_stores_view(main_frame):
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    columns = ("emp_count", "region", "address", "website", "rating", "email", "phone", "name", "hidden_id")
+    # שמירה על עמודת קוד סניף גלויה בטבלה
+    columns = ("emp_count", "region", "address", "website", "rating", "email", "phone", "name", "store_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
     # כותרות העמודות
+    tree.heading("store_id", text="קוד סניף", anchor="center")
     tree.heading("name", text="שם סניף", anchor="center")
     tree.heading("phone", text="טלפון", anchor="center")
     tree.heading("email", text="אימייל", anchor="center")
@@ -78,21 +76,21 @@ def show_stores_view(main_frame):
     tree.heading("region", text="מחוז/אזור", anchor="center")
     tree.heading("emp_count", text="מספר עובדים", anchor="center")
 
-    # --- שדרוג והגדלת רוחב משמעותית: מניעת חיתוך ואישור מתיחה גמישה (stretch=tk.YES) ---
-    tree.column("name", width=320, anchor="e", stretch=tk.YES)       # מורחב ל-320 ומיושר לימין
+    # רוחב ומתיחה נכונה לעמודות
+    tree.column("store_id", width=90, anchor="center", stretch=tk.NO)
+    tree.column("name", width=260, anchor="e", stretch=tk.YES)       
     tree.column("phone", width=140, anchor="center", stretch=tk.NO)
     tree.column("email", width=220, anchor="center", stretch=tk.NO)
     tree.column("rating", width=100, anchor="center", stretch=tk.NO)
     tree.column("website", width=200, anchor="center", stretch=tk.NO)
-    tree.column("address", width=350, anchor="e", stretch=tk.YES)    # מורחב ל-350 ומיושר לימין
+    tree.column("address", width=320, anchor="e", stretch=tk.YES)    
     tree.column("region", width=120, anchor="center", stretch=tk.NO)
     tree.column("emp_count", width=130, anchor="center", stretch=tk.NO)
-    tree.column("hidden_id", width=0, stretch=tk.NO)
 
     tree.tag_configure("has_employees", foreground="#1E3A8A", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("no_employees", foreground="#6B7280", font=("Segoe UI", 12))
 
-    # בניית סרגלי הגלילה בצורה מעוגנת נכונה
+    # סרגלי גלילה
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview)
     
@@ -276,20 +274,30 @@ def save_store(modal, widgets, tree, is_edit):
                     SET StoreName = %s, Phone = %s, StoreEmail = %s, Rating = %s, websiteurl = %s, Address = %s, Region = %s 
                     WHERE StoreID = %s;
                 """, (name, phone, email, rating_val, web_val, addr_val, region, int(s_id)))
+                conn.commit()
+                messagebox.showinfo("הצלחה", "הנתונים עודכנו בהצלחה!")
+                modal.destroy()
+                refresh_table(tree)
             else:
                 cursor.execute("""
                     INSERT INTO STORE (StoreID, StoreName, Phone, StoreEmail, Rating, websiteurl, Address, Region) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
                 """, (int(s_id), name, phone, email, rating_val, web_val, addr_val, region))
-            
-            conn.commit()
-            messagebox.showinfo("הצלחה", "הנתונים נשמרו בהצלחה!")
-            modal.destroy()
-            refresh_table(tree)
+                conn.commit()
+                messagebox.showinfo("הצלחה", "הסניף החדש נוסף בהצלחה לרשת!")
+                modal.destroy()
+                refresh_table(tree)
         except Exception as e:
             error_msg = str(e)
             if "duplicate key" in error_msg or "already exists" in error_msg:
-                messagebox.showerror("קוד סניף קיים במערכת", f"לא ניתן להוסיף את הסניף.\nקוד סניף מספר {s_id} כבר תפוס על ידי חנות אחרת ברשת!\nאנא בחרי קוד סניף פנוי.")
+                messagebox.showerror(
+                    "קוד סניף קיים במערכת", 
+                    f"לא ניתן לבצע רישום לסניף החדש.\n\n"
+                    f"💡 הסיבה:\n"
+                    f"קוד סניף מספר {s_id} כבר תפוס ורשום על ידי חנות אחרת ברשת!\n\n"
+                    f"🛠️ מה צריך לעשות?\n"
+                    f"אנא בחרי מספר מזהה (קוד) ייחודי ופנוי שאינו קיים עדיין במערכת."
+                )
             else:
                 messagebox.showerror("שגיאה בפעולה", f"הפעולה נכשלה במערכת:\n{error_msg}")
         finally:

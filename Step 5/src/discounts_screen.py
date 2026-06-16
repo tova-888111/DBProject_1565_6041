@@ -9,19 +9,27 @@ def show_discounts_view(main_frame):
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    # --- כותרת עליונה ---
-    header_label = ctk.CTkLabel(main_frame, text="ניהול מבצעים והנחות רשתיים", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
-    header_label.pack(pady=(30, 2), padx=35, fill="x")
+    # --- כותרת עליונה מנופחת ומודגשת ---
+    header_label = ctk.CTkLabel(main_frame, text="ניהול מבצעים והנחות רשתיים", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
+    header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="הגדרה וניהול של אחוזי הנחה, תאריכי תוקף והחלת מבצעים על מוצרי הרשת", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
+    sub_header = ctk.CTkLabel(main_frame, text="הגדרה וניהול של אחוזי הנחה, תאריכי תוקף והחלת מבצעים על מוצרי הרשת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
     sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
-    # --- שימוש ב-Tabview לחלוקה פנימית ---
-    tabview = ctk.CTkTabview(main_frame, fg_color="transparent", segmented_button_selected_color="#059669", segmented_button_selected_hover_color="#047857")
+    # --- מערכת הטאבים המרכזית (Tabview) בעיצוב האחיד והזהה לשאר האתר ---
+    tabview = ctk.CTkTabview(main_frame, corner_radius=12, fg_color="#F3F4F6", segmented_button_fg_color="#E5E7EB",
+                             segmented_button_selected_color="#3B82F6", segmented_button_selected_hover_color="#2563EB",
+                             segmented_button_unselected_color="#FFFFFF", segmented_button_unselected_hover_color="#F3F4F6",
+                             text_color="#111827")
     tabview.pack(fill="both", expand=True, padx=35, pady=(0, 20))
     
-    tab_catalog = tabview.add("🏷️  ניהול מבצעים")
-    tab_applies = tabview.add("🔗  החלת מבצעים על מוצרים")
+    try:
+        tabview._segmented_button.configure(font=("Segoe UI", 14, "bold"), height=45)
+    except:
+        pass
+    
+    tab_catalog = tabview.add("🏷️   ניהול מבצעים")
+    tab_applies = tabview.add("🔗   החלת מבצעים על מוצרים")
 
     setup_discount_catalog_tab(tab_catalog)
     setup_applies_to_tab(tab_applies)
@@ -31,54 +39,57 @@ def show_discounts_view(main_frame):
 # 📑 כרטיסייה 1: קטלוג המבצעים (טבלת DISCOUNT)
 # =====================================================================
 def setup_discount_catalog_tab(tab):
+    # שורת כותרת פנימית
+    title_frame = ctk.CTkFrame(tab, fg_color="transparent")
+    title_frame.pack(fill="x", pady=(5, 2))
+    title_lbl = ctk.CTkLabel(title_frame, text="📋  רשימת מבצעי קטלוג מוגדרים", font=("Segoe UI", 13, "bold"), text_color="#374151", anchor="e")
+    title_lbl.pack(fill="x", padx=5)
+
+    # החזרת כפתור "מבצע חדש" מתחת למלל הכותרת בצד ימין
     action_frame = ctk.CTkFrame(tab, fg_color="transparent")
-    action_frame.pack(fill="x", pady=(10, 15))
-
-    refresh_btn = ctk.CTkButton(action_frame, text="🔄  רענן", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=100, height=38, corner_radius=10, command=lambda: refresh_discounts_table(tree))
-    refresh_btn.pack(side="left", padx=5)
-
-    add_btn = ctk.CTkButton(action_frame, text="➕  מבצע חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=140, height=38, corner_radius=10, command=lambda: open_discount_modal(tree))
+    action_frame.pack(fill="x", pady=(2, 10))
+    add_btn = ctk.CTkButton(action_frame, text="➕   מבצע חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=140, height=38, corner_radius=10, command=lambda: open_discount_modal(tree))
     add_btn.pack(side="right", padx=5)
 
-    table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
-    table_container.pack(fill="both", expand=True, pady=(0, 15))
+    table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=12, border_color="#E5E7EB", border_width=1)
+    table_container.pack(fill="both", expand=True, pady=5)
+    table_container.grid_rowconfigure(0, weight=1)
+    table_container.grid_columnconfigure(0, weight=0) 
+    table_container.grid_columnconfigure(1, weight=1)
 
-    # ה-ID מוסתר בעמודה האחרונה index 5
-    columns = ("status", "end_date", "start_date", "percentage", "name", "hidden_id")
+    columns = ("status", "end_date", "start_date", "percentage", "name", "discount_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
+    tree.heading("discount_id", text="קוד מבצע", anchor="center")
     tree.heading("name", text="שם המבצע", anchor="center")
     tree.heading("percentage", text="אחוז הנחה", anchor="center")
     tree.heading("start_date", text="תאריך התחלה", anchor="center")
     tree.heading("end_date", text="תאריך סיום", anchor="center")
     tree.heading("status", text="סטטוס תוקף", anchor="center")
 
-    tree.column("name", width=160, anchor="center")
-    tree.column("percentage", width=100, anchor="center")
-    tree.column("start_date", width=130, anchor="center")
-    tree.column("end_date", width=130, anchor="center")
-    tree.column("status", width=120, anchor="center")
-    
-    # הסתרת עמודת ה-ID מהתצוגה הכללית כפי שנדרש
-    tree.column("hidden_id", width=0, stretch=tk.NO)
+    tree.column("discount_id", width=90, anchor="center", stretch=tk.NO)
+    tree.column("name", width=220, anchor="e", stretch=tk.YES)
+    tree.column("percentage", width=110, anchor="center", stretch=tk.NO)
+    tree.column("start_date", width=140, anchor="center", stretch=tk.NO)
+    tree.column("end_date", width=140, anchor="center", stretch=tk.NO)
+    tree.column("status", width=130, anchor="center", stretch=tk.NO)
 
-    tree.add_tag = tree.tag_configure
-    tree.tag_configure("active", foreground="#10B981", font=("Segoe UI", 12, "bold"))
-    tree.tag_configure("upcoming", foreground="#F59E0B", font=("Segoe UI", 12, "bold"))
-    tree.tag_configure("expired", foreground="#EF4444", font=("Segoe UI", 12, "bold"))
+    tree.tag_configure("active", background="#E8F5E9", foreground="#10B981", font=("Segoe UI", 12, "bold"))
+    tree.tag_configure("upcoming", background="#FFFBEB", foreground="#F59E0B", font=("Segoe UI", 12, "bold"))
+    tree.tag_configure("expired", background="#FEF2F2", foreground="#EF4444", font=("Segoe UI", 12, "bold"))
 
-    scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
-    tree.pack(fill="both", expand=True, padx=15, pady=15)
+    v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=v_scrollbar.set)
+    v_scrollbar.grid(row=0, column=0, sticky="ns", pady=15, padx=(15, 0))
+    tree.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
     bottom_actions = ctk.CTkFrame(tab, fg_color="transparent")
-    bottom_actions.pack(fill="x", pady=(0, 10))
+    bottom_actions.pack(fill="x", pady=(15, 10))
 
-    edit_btn = ctk.CTkButton(bottom_actions, text="✏️  עריכת מבצע", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=140, height=38, corner_radius=10, command=lambda: edit_selected_discount(tree))
+    edit_btn = ctk.CTkButton(bottom_actions, text="✏️   עריכת מבצע", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=140, height=38, corner_radius=10, command=lambda: edit_selected_discount(tree))
     edit_btn.pack(side="right", padx=5)
 
-    delete_btn = ctk.CTkButton(bottom_actions, text="🗑️  מחיקת מבצע", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=120, height=38, corner_radius=10, command=lambda: delete_selected_discount(tree))
+    delete_btn = ctk.CTkButton(bottom_actions, text="🗑️   מחיקת מבצע", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=120, height=38, corner_radius=10, command=lambda: delete_selected_discount(tree))
     delete_btn.pack(side="right", padx=5)
 
     refresh_discounts_table(tree)
@@ -98,13 +109,12 @@ def refresh_discounts_table(tree):
                 e_date = row[4]
                 
                 if today > e_date:
-                    status, tag = "🔴 Expired", "expired"
+                    status, tag = "🔴 פג תוקף", "expired"
                 elif today < s_date:
-                    status, tag = "🟡 Upcoming", "upcoming"
+                    status, tag = "🟡 עתידי", "upcoming"
                 else:
-                    status, tag = "🟢 Active", "active"
+                    status, tag = "🟢 פעיל רשת", "active"
                 
-                # תוקן פורמט התאריך ל-%Y-%m-%d הנקי ללא תווים עודפים
                 tree.insert("", "end", values=(status, e_date.strftime('%Y-%m-%d'), s_date.strftime('%Y-%m-%d'), f"{row[2]}%", row[1], row[0]), tags=(tag,))
         except Exception as e:
             print(f"Error refreshing discounts catalog: {e}")
@@ -161,7 +171,7 @@ def open_discount_modal(tree, data=None):
                 widget.insert(0, data[cfg["key"]])
         widgets[cfg["key"]] = widget
 
-    save_btn = ctk.CTkButton(scrollable_frame, text="💾  שמור מבצע", font=("Segoe UI", 14, "bold"), fg_color="#10B981", hover_color="#059669", height=42, corner_radius=10,
+    save_btn = ctk.CTkButton(scrollable_frame, text="💾   שמור מבצע", font=("Segoe UI", 14, "bold"), fg_color="#10B981", hover_color="#059669", height=42, corner_radius=10,
                              command=lambda: save_discount(modal, widgets, tree, is_edit))
     save_btn.pack(fill="x", padx=40, pady=(25, 30))
 
@@ -208,7 +218,7 @@ def save_discount(modal, widgets, tree, is_edit):
             refresh_discounts_table(tree)
         except Exception as e:
             if "duplicate key" in str(e):
-                messagebox.showerror("שגיאה", f"קוד מבצע מספר {d_id} כבר קיים במערכת.")
+                messagebox.showerror("קוד תפוס", f"קוד מבצע מספר {d_id} כבר תפוס וקיים במערכת.")
             else:
                 messagebox.showerror("שגיאה", f"הפעולה נכשלה:\n{e}")
         finally:
@@ -233,21 +243,35 @@ def delete_selected_discount(tree):
         return
     val = tree.item(selected[0], 'values')
     d_id = val[5]
+    d_name = val[4]
     
-    confirm = messagebox.askyesno("אישור", f"האם את בטוחה שברצונך למחוק את מבצע מספר {d_id}?\nשים לב: פעולה זו תסיר את המבצע מכל המוצרים המקושרים אליו!")
+    confirm = messagebox.askyesno("אישור", f"האם את בטוחה שברצונך למחוק את מבצע מספר {d_id} ('{d_name}')?")
     if not confirm: return
 
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute("DELETE FROM APPLIES_TO WHERE DiscountID = %s;", (int(d_id),))
+            # ניסיון מחיקה ישיר מהדאטהבייס כדי לאפשר מנגנון תלויות מבוקר
             cursor.execute("DELETE FROM DISCOUNT WHERE DiscountID = %s;", (int(d_id),))
             conn.commit()
-            messagebox.showinfo("הצלחה", "המבצע נמחק לחלוטין.")
+            messagebox.showinfo("הצלחה", "המבצע נמחק לחלוטין מהמערכת.")
             refresh_discounts_table(tree)
         except Exception as e:
-            messagebox.showerror("שגיאה", f"המחיקה נכשלה:\n{e}")
+            error_msg = str(e)
+            # --- ✨ שדרוג מבוקש: חסימת מחיקה כאשר רשומות אחרות תלויות בהזמנה זו ---
+            if "foreign key constraint" in error_msg or "is still referenced" in error_msg:
+                messagebox.showerror(
+                    "חסימת מחיקה - מבצע משויך למוצרים", 
+                    f"לא ניתן למחוק את המבצע '{d_name}' מהמערכת.\n\n"
+                    f"💡 הסיבה:\n"
+                    f"מבצע זה מוחל כעת באופן פעיל על מוצרים שונים ברחבי הרשת (קיימות שורות משויכות בטבלת החלת מבצעים).\n\n"
+                    f"🛠️ מה צריך לעשות?\n"
+                    f"עברי ללשונית 'החלת מבצעים על מוצרים', בחרי את המוצרים המקושרים למבצע זה, ולחצי על 'ביטול מבצע ממוצר'. "
+                    f"רק לאחר שהמבצע יהיה חופשי לחלוטין ולא משויך לשום מוצר, תוכלי להסירו מהקטלוג."
+                )
+            else:
+                messagebox.showerror("שגיאה", f"המחיקה נכשלה:\n{error_msg}")
         finally:
             cursor.close()
             conn.close()
@@ -257,55 +281,68 @@ def delete_selected_discount(tree):
 # 📑 כרטיסייה 2: החלת מבצעים על מוצרים (טבלת APPLIES_TO)
 # =====================================================================
 def setup_applies_to_tab(tab):
+    search_frame = ctk.CTkFrame(tab, fg_color="transparent")
+    search_frame.pack(fill="x", pady=(5, 12))
+
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  סינון לפי קוד מבצע", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(10, 0))
+    
+    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי קוד מבצע", font=("Segoe UI", 13), width=180, height=35, corner_radius=8, justify="right")
+    search_id_entry.pack(side="right")
+    search_id_entry.bind("<KeyRelease>", lambda event: refresh_applies_table(tree, search_id_entry.get().strip()))
+
+    # החזרת כפתור הפעולה העליון לשורת כפתורי הפעולה הבאה (מתחת לחיפוש) בצד ימין
     action_frame = ctk.CTkFrame(tab, fg_color="transparent")
-    action_frame.pack(fill="x", pady=(10, 15))
+    action_frame.pack(fill="x", pady=(0, 10))
 
-    refresh_btn = ctk.CTkButton(action_frame, text="🔄  רענן שיוכים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=38, corner_radius=10, command=lambda: refresh_applies_table(tree))
-    refresh_btn.pack(side="left", padx=5)
-
-    add_btn = ctk.CTkButton(action_frame, text="🔗  החלת מבצע על מוצר", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=180, height=38, corner_radius=10, command=lambda: open_applies_modal(tree))
+    add_btn = ctk.CTkButton(action_frame, text="🔗   החלת מבצע על מוצר", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=180, height=40, corner_radius=10, command=lambda: open_applies_modal(tree))
     add_btn.pack(side="right", padx=5)
 
-    table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
-    table_container.pack(fill="both", expand=True, pady=(0, 15))
+    table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=12, border_color="#E5E7EB", border_width=1)
+    table_container.pack(fill="both", expand=True, pady=5)
+    table_container.grid_rowconfigure(0, weight=1)
+    table_container.grid_columnconfigure(0, weight=0) 
+    table_container.grid_columnconfigure(1, weight=1)
 
-    # מפתחות ה-ID הועברו לסוף והוסתרו מהתצוגה הגלויה
-    columns = ("discount_pct", "discount_name", "product_brand", "product_name", "hidden_discount_id", "hidden_product_id")
+    columns = ("discount_pct", "discount_name", "product_brand", "product_name", "discount_id", "product_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
+    tree.heading("product_id", text="קוד מוצר", anchor="center")
     tree.heading("product_name", text="שם מוצר", anchor="center")
     tree.heading("product_brand", text="מותג מוצר", anchor="center")
-    tree.heading("discount_name", text="מבצע מוחל", anchor="center")
-    tree.heading("discount_pct", text="אחוז הנחה בסניפים", anchor="center")
+    tree.heading("discount_id", text="קוד מבצע", anchor="center")
+    tree.heading("discount_name", text="שם המבצע המוחל", anchor="center")
+    tree.heading("discount_pct", text="אחוז הנחה", anchor="center")
 
-    tree.column("product_name", width=150, anchor="center")
-    tree.column("product_brand", width=120, anchor="center")
-    tree.column("discount_name", width=180, anchor="center")
-    tree.column("discount_pct", width=120, anchor="center")
-    
-    # הסתרת מפתחות ה-ID כדי לשמור על הנקיון החזותי שביקשת
-    tree.column("hidden_discount_id", width=0, stretch=tk.NO)
-    tree.column("hidden_product_id", width=0, stretch=tk.NO)
+    tree.column("product_id", width=90, anchor="center", stretch=tk.NO)
+    tree.column("product_name", width=180, anchor="e", stretch=tk.YES)
+    tree.column("product_brand", width=130, anchor="center", stretch=tk.NO)
+    tree.column("discount_id", width=90, anchor="center", stretch=tk.NO)
+    tree.column("discount_name", width=220, anchor="e", stretch=tk.YES)
+    tree.column("discount_pct", width=110, anchor="center", stretch=tk.NO)
 
-    scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
-    tree.pack(fill="both", expand=True, padx=15, pady=15)
+    # --- ✨ הגדרות צבע מעודכנות: ירוק לפעיל, אדום בהיר ללא פעיל (פג תוקף/עתידי) ---
+    tree.tag_configure("active_link", background="#E8F5E9", foreground="#047857", font=("Segoe UI", 12, "bold"))
+    tree.tag_configure("inactive_link", background="#FEF2F2", foreground="#991B1B", font=("Segoe UI", 12))
+
+    v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=v_scrollbar.set)
+    v_scrollbar.grid(row=0, column=0, sticky="ns", pady=15, padx=(15, 0))
+    tree.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
     bottom_actions = ctk.CTkFrame(tab, fg_color="transparent")
-    bottom_actions.pack(fill="x", pady=(0, 10))
+    bottom_actions.pack(fill="x", pady=(15, 10))
 
-    # הוספת כפתור העריכה החדש לשיוך המבצעים!
-    edit_btn = ctk.CTkButton(bottom_actions, text="✏️  עריכת שיוך מבצע", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=150, height=38, corner_radius=10, command=lambda: edit_selected_applies(tree))
+    edit_btn = ctk.CTkButton(bottom_actions, text="✏️   עריכת שיוך מבצע", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=150, height=38, corner_radius=10, command=lambda: edit_selected_applies(tree))
     edit_btn.pack(side="right", padx=5)
 
-    delete_btn = ctk.CTkButton(bottom_actions, text="❌  ביטול מבצע ממוצר", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=160, height=38, corner_radius=10, command=lambda: delete_applies_link(tree))
+    delete_btn = ctk.CTkButton(bottom_actions, text="❌   ביטול מבצע ממוצר", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=160, height=38, corner_radius=10, command=lambda: delete_applies_link(tree))
     delete_btn.pack(side="right", padx=5)
 
     refresh_applies_table(tree)
 
 
-def refresh_applies_table(tree):
+def refresh_applies_table(tree, filter_discount_id=""):
     for item in tree.get_children():
         tree.delete(item)
     conn = get_db_connection()
@@ -313,16 +350,33 @@ def refresh_applies_table(tree):
         cursor = conn.cursor()
         try:
             query = """
-                SELECT a.ProductID, p.ProductName, p.Brand, a.DiscountID, d.DiscountName, d.DiscountPercentage
+                SELECT a.ProductID, p.ProductName, p.Brand, a.DiscountID, d.DiscountName, d.DiscountPercentage, d.StartDate, d.EndDate
                 FROM APPLIES_TO a
                 JOIN PRODUCT p ON a.ProductID = p.ProductID
                 JOIN DISCOUNT d ON a.DiscountID = d.DiscountID
-                ORDER BY a.ProductID ASC, a.DiscountID ASC;
+                WHERE 1=1
             """
-            cursor.execute(query)
+            params = []
+            
+            if filter_discount_id and filter_discount_id.isdigit():
+                query += " AND a.DiscountID = %s"
+                params.append(int(filter_discount_id))
+                
+            query += " ORDER BY a.ProductID ASC, a.DiscountID ASC;"
+            cursor.execute(query, tuple(params))
+            
+            today = datetime.now().date()
             for row in cursor.fetchall():
-                # סדר הנתונים תואם לאינדקסים: [0]=pct, [1]=disc_name, [2]=brand, [3]=prod_name, [4]=hidden_discount_id, [5]=hidden_product_id
-                tree.insert("", "end", values=(f"{row[5]}%", row[4], row[2], row[1], row[3], row[0]))
+                start_date = row[6]
+                end_date = row[7]
+                
+                # --- ✨ תיקון צביעה מבוקש: אם המבצע בתוקף נצבע בירוק, אחרת (כל שאר המקרים) נצבע באדום עדין ---
+                if start_date <= today <= end_date:
+                    row_tag = "active_link"
+                else:
+                    row_tag = "inactive_link"
+                
+                tree.insert("", "end", values=(f"{row[5]}%", row[4], row[2], row[1], row[3], row[0]), tags=(row_tag,))
         except Exception as e:
             print(f"Error refreshing applies_to view: {e}")
         finally:
@@ -331,7 +385,6 @@ def refresh_applies_table(tree):
 
 
 def get_available_ids_with_names(table_name, id_column, name_column):
-    """שליפת מזהים משולבים בשמות עבור ה-OptionMenu כדי לתת חווית CRUD מובנת"""
     items = []
     conn = get_db_connection()
     if conn:
@@ -349,7 +402,6 @@ def get_available_ids_with_names(table_name, id_column, name_column):
 
 
 def open_applies_modal(tree, edit_data=None):
-    """מודל הוספה ועריכה עבור שיוך מבצעים (APPLIES_TO CRUD)"""
     is_edit = edit_data is not None
     title_text = "✏️ עדכון שיוך מבצע למוצר" if is_edit else "🔗 החלת מבצע על מוצר קטלוג"
     
@@ -384,7 +436,6 @@ def open_applies_modal(tree, edit_data=None):
     disc_opt.pack(fill="x")
 
     if is_edit:
-        # במצב עריכה: נועלים את המוצר (חלק מהמפתח) ומאפשרים לשנות את ההנחה שחלה עליו
         for item in products_list:
             if item.startswith(str(edit_data['product_id']) + " -"):
                 prod_opt.set(item)
@@ -399,7 +450,7 @@ def open_applies_modal(tree, edit_data=None):
         prod_opt.set(products_list[0])
         disc_opt.set(discounts_list[0])
 
-    save_btn = ctk.CTkButton(modal, text="💾  שמור שיוך מעודכן" if is_edit else "🔗  בצע שיוך מבצע", 
+    save_btn = ctk.CTkButton(modal, text="💾   שמור שיוך מעודכן" if is_edit else "🔗   בצע שיוך מבצע", 
                              font=("Segoe UI", 14, "bold"), fg_color="#10B981", hover_color="#059669", height=42, corner_radius=10,
                              command=lambda: save_applies_link(modal, prod_opt.get().split(" - ")[0], disc_opt.get().split(" - ")[0], tree, is_edit, edit_data))
     save_btn.pack(fill="x", padx=45, pady=(30, 0))
@@ -415,7 +466,6 @@ def save_applies_link(modal, p_id, d_id, tree, is_edit, old_data=None):
         cursor = conn.cursor()
         try:
             if is_edit:
-                # פעולת UPDATE על טבלת הקשר: מעדכנים את ה-DiscountID עבור אותו ProductID
                 cursor.execute("UPDATE APPLIES_TO SET DiscountID = %s WHERE ProductID = %s AND DiscountID = %s;", 
                                (int(d_id), int(p_id), int(old_data['discount_id'])))
             else:
@@ -436,14 +486,12 @@ def save_applies_link(modal, p_id, d_id, tree, is_edit, old_data=None):
 
 
 def edit_selected_applies(tree):
-    """שליפת מפתחות ה-ID הנסתרים מהכרטיסייה השנייה לצורך עריכת ההנחה על המוצר"""
     selected = tree.selection()
     if not selected:
         messagebox.showwarning("בחירה חובה", "אנא בחרי שורת שיוך מהטבלה לצורך עריכה.")
         return
     val = tree.item(selected[0], 'values')
     
-    # שליפת ה-IDs הנסתרים מהאינדקסים האחרונים (4 ו-5)
     edit_data = {
         'discount_id': val[4],
         'product_id': val[5]

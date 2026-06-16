@@ -9,32 +9,36 @@ def show_employees_view(main_frame):
         widget.destroy()
 
     # --- כותרת עליונה ---
-    header_label = ctk.CTkLabel(main_frame, text="ניהול עובדי הרשת", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
-    header_label.pack(pady=(30, 2), padx=35, fill="x")
+    header_label = ctk.CTkLabel(main_frame, text="ניהול עובדי הרשת", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
+    header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ופיטורין של צוות העובדים בכלל סניפי הרשת", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 15), padx=35, fill="x")
+    sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ופיטורין של צוות העובדים בכלל סניפי הרשת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
+    sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
-    # --- שורת חיפוש עליונה לפי שם סניף ---
+    # --- שורת חיפוש עליונה משולבת (לפי שם סניף וקוד סניף) ---
     search_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     search_frame.pack(padx=35, fill="x", pady=(0, 15))
     
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍  סינון עובדים לפי שם סניף", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש:", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 0))
     
-    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף (למשל: ירושלים)...", font=("Segoe UI", 13), width=320, height=35, corner_radius=8, justify="right")
-    search_entry.pack(side="right")
+    # 1. שדה חיפוש לפי שם סניף
+    search_name_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי שם סניף (למשל: ירושלים)", font=("Segoe UI", 13), width=240, height=35, corner_radius=8, justify="right")
+    search_name_entry.pack(side="right", padx=5)
     
-    search_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_entry.get().strip()))
+    # 2. שדה חיפוש לפי קוד סניף (ID)
+    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי קוד סניף (מספר)", font=("Segoe UI", 13), width=160, height=35, corner_radius=8, justify="right")
+    search_id_entry.pack(side="right", padx=5)
+    
+    # קישור אירועי הקלדה לעדכון דינמי משולב של שני השדות יחד בזמן אמת
+    search_name_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_name_entry.get().strip(), search_id_entry.get().strip()))
+    search_id_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_name_entry.get().strip(), search_id_entry.get().strip()))
 
-    # --- שורת כפתורי פעולה עליונה ---
+    # --- ✨ החזרה למקום המקורי: שורת כפתורי פעולה מתחת לחיפוש ---
     action_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     action_frame.pack(padx=35, fill="x", pady=(0, 15))
 
-    refresh_btn = ctk.CTkButton(action_frame, text="🔄  רענן נתונים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=40, corner_radius=10, 
-                             command=lambda: [search_entry.delete(0, tk.END), refresh_table(tree)])
-    refresh_btn.pack(side="left", padx=5)
-
+    # כפתור הוספת עובד חזר למיקומו המקורי בצד ימין (כפתור הרענון הוסר בהצלחה)
     add_btn = ctk.CTkButton(action_frame, text="➕  הוספת עובד חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=160, height=40, corner_radius=10, command=lambda: open_employee_modal(tree))
     add_btn.pack(side="right", padx=5)
 
@@ -42,10 +46,9 @@ def show_employees_view(main_frame):
     table_container = ctk.CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
     table_container.pack(fill="both", expand=True, padx=35, pady=(0, 20))
 
-    # הגדרת משקלים (Weights) - כעת עמודה 1 (הטבלה) מתרחבת, ועמודה 0 (הגלילה) קבועה בצד שמאל
     table_container.grid_rowconfigure(0, weight=1)
-    table_container.grid_columnconfigure(0, weight=0) # סרגל גלילה משמאל
-    table_container.grid_columnconfigure(1, weight=1) # הטבלה מימין
+    table_container.grid_columnconfigure(0, weight=0) 
+    table_container.grid_columnconfigure(1, weight=1) 
 
     style = ttk.Style()
     style.theme_use("clam")
@@ -68,35 +71,35 @@ def show_employees_view(main_frame):
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    columns = ("store_name", "role", "salary", "status", "last_name", "first_name", "hidden_store_id", "hidden_emp_id")
+    # שמירה על סדר העמודות כולל העמודות הגלויות
+    columns = ("store_name", "store_id", "role", "salary", "status", "last_name", "first_name", "emp_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
+    tree.heading("emp_id", text="תעודת זהות", anchor="center")
     tree.heading("first_name", text="שם פרטי", anchor="center")
     tree.heading("last_name", text="שם משפחה", anchor="center")
     tree.heading("status", text="סטטוס עבודה", anchor="center")
     tree.heading("salary", text="שכר חודשי", anchor="center")
     tree.heading("role", text="תפקיד", anchor="center")
+    tree.heading("store_id", text="קוד סניף", anchor="center")
     tree.heading("store_name", text="משויך לסניף", anchor="center")
 
-    # הגדרת מתיחה דינמית לעמודות כדי שימלאו את כל שטח הבלוק בצורה סימטרית
+    # קביעת מימדים ומתיחה סימטרית לעמודות
+    tree.column("emp_id", width=100, anchor="center", stretch=tk.NO)
     tree.column("first_name", width=120, anchor="center", stretch=tk.YES)
     tree.column("last_name", width=120, anchor="center", stretch=tk.YES)
-    tree.column("status", width=110, anchor="center", stretch=tk.YES)
-    tree.column("salary", width=110, anchor="center", stretch=tk.YES)
-    tree.column("role", width=250, anchor="center", stretch=tk.YES)        
-    tree.column("store_name", width=340, anchor="e", stretch=tk.YES)      
-    
-    tree.column("hidden_store_id", width=0, stretch=tk.NO)
-    tree.column("hidden_emp_id", width=0, stretch=tk.NO)
+    tree.column("status", width=110, anchor="center", stretch=tk.NO)
+    tree.column("salary", width=110, anchor="center", stretch=tk.NO)
+    tree.column("role", width=200, anchor="center", stretch=tk.YES) 
+    tree.column("store_id", width=90, anchor="center", stretch=tk.NO)       
+    tree.column("store_name", width=280, anchor="e", stretch=tk.YES)      
 
     tree.tag_configure("active_status", foreground="#10B981", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("inactive_status", foreground="#EF4444", font=("Segoe UI", 12, "bold"))
 
-    # יצירת סרגל גלילה אנכי בלבד (ללא גלילה אופקית)
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=v_scrollbar.set)
     
-    # --- מיקום מעודכן: סרגל הגלילה בעמודה 0 (שמאל) והטבלה בעמודה 1 (ימין) ---
     v_scrollbar.grid(row=0, column=0, sticky="ns", pady=15, padx=(15, 0))
     tree.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
@@ -113,7 +116,7 @@ def show_employees_view(main_frame):
     refresh_table(tree)
 
 
-def refresh_table(tree, store_search_query=""):
+def refresh_table(tree, name_query="", id_query=""):
     for item in tree.get_children():
         tree.delete(item)
 
@@ -121,23 +124,24 @@ def refresh_table(tree, store_search_query=""):
     if conn:
         cursor = conn.cursor()
         try:
-            if store_search_query:
-                query = """
-                    SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
-                    FROM EMPLOYEE e
-                    JOIN STORE s ON e.StoreID = s.StoreID
-                    WHERE s.StoreName ILIKE %s
-                    ORDER BY e.EmployeeID ASC;
-                """
-                cursor.execute(query, (f"%{store_search_query}%",))
-            else:
-                query = """
-                    SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
-                    FROM EMPLOYEE e
-                    JOIN STORE s ON e.StoreID = s.StoreID
-                    ORDER BY e.EmployeeID ASC;
-                """
-                cursor.execute(query)
+            query = """
+                SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
+                FROM EMPLOYEE e
+                JOIN STORE s ON e.StoreID = s.StoreID
+                WHERE 1=1
+            """
+            params = []
+            
+            if name_query:
+                query += " AND s.StoreName ILIKE %s"
+                params.append(f"%{name_query}%")
+                
+            if id_query and id_query.isdigit():
+                query += " AND e.StoreID = %s"
+                params.append(int(id_query))
+                
+            query += " ORDER BY e.EmployeeID ASC;"
+            cursor.execute(query, tuple(params))
 
             rows = cursor.fetchall()
             for row in rows:
@@ -149,7 +153,7 @@ def refresh_table(tree, store_search_query=""):
                 else:
                     row_tag = "inactive_status"
                 
-                tree.insert("", "end", values=(row[7], row[5], salary_display, status_val, row[2], row[1], row[6], row[0]), tags=(row_tag,))
+                tree.insert("", "end", values=(row[7], row[6], row[5], salary_display, status_val, row[2], row[1], row[0]), tags=(row_tag,))
         except Exception as e:
             messagebox.showerror("שגיאה", f"נכשלה שליפת נתוני עובדים: {e}")
         finally:
@@ -326,16 +330,16 @@ def edit_selected_employee(tree):
     
     item_values = tree.item(selected[0], 'values')
     
-    employee_data = {
+    store_data = {
         'id': item_values[7],
-        'first_name': item_values[5],
-        'last_name': item_values[4],
-        'status': item_values[3].strip(),
-        'salary': item_values[2].replace("₪", "").replace(",", "").strip(),
-        'role': item_values[1],
-        'store_id': item_values[6]
+        'first_name': item_values[6],
+        'last_name': item_values[5],
+        'status': item_values[4].strip(),
+        'salary': item_values[3].replace("₪", "").replace(",", "").strip(),
+        'role': item_values[2],
+        'store_id': item_values[1]
     }
-    open_employee_modal(tree, employee_data)
+    open_employee_modal(tree, store_data)
 
 
 def delete_selected_employee(tree):
@@ -346,7 +350,7 @@ def delete_selected_employee(tree):
     
     item_values = tree.item(selected[0], 'values')
     emp_id = item_values[7]
-    emp_name = f"{item_values[5]} {item_values[4]}"
+    emp_name = f"{item_values[6]} {item_values[5]}"
 
     confirm = messagebox.askyesno("אישור מחיקה", f"האם את בטוחה שברצונך למחוק לצמיתות את העובד '{emp_name}' מהמערכת?")
     if not confirm:
