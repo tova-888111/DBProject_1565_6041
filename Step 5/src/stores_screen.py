@@ -13,23 +13,36 @@ def show_stores_view(main_frame):
     header_label.pack(pady=(30, 2), padx=35, fill="x")
     
     sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ומחיקה של סניפים פעילים במערכת", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 20), padx=35, fill="x")
+    sub_header.pack(pady=(0, 15), padx=35, fill="x")
 
-    # --- שורת כפתורי פעולה עליונה ---
+    # --- שורת חיפוש עליונה ---
+    search_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    search_frame.pack(padx=35, fill="x", pady=(0, 15))
+    
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  חיפוש סניף לפי שם", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(10, 0))
+    
+    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף לחיפוש...", font=("Segoe UI", 13), width=280, height=35, corner_radius=8, justify="right")
+    search_entry.pack(side="right")
+    
+    # הפעלת חיפוש בזמן אמת בעת הקלדה
+    search_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_entry.get().strip()))
+
+    # --- שורת כפתורי פעולה ---
     action_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     action_frame.pack(padx=35, fill="x", pady=(0, 15))
 
-    # כפתור רענון
-    refresh_btn = ctk.CTkButton(action_frame, text="🔄   רענן נתונים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=40, corner_radius=10, command=lambda: refresh_table(tree))
+    # כפתור רענון ומחיקת החיפוש
+    refresh_btn = ctk.CTkButton(action_frame, text="🔄   רענן נתונים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=40, corner_radius=10, 
+                             command=lambda: [search_entry.delete(0, tk.END), refresh_table(tree)])
     refresh_btn.pack(side="left", padx=5)
 
-    # כפתור הוספת סניף
     add_btn = ctk.CTkButton(action_frame, text="➕   הוספת סניף חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=160, height=40, corner_radius=10, command=lambda: open_store_modal(tree))
     add_btn.pack(side="right", padx=5)
 
     # --- אזור הטבלה המרכזי ---
     table_container = ctk.CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
-    table_container.pack(fill="both", expand=True, padx=35, pady=(0, 25))
+    table_container.pack(fill="both", expand=True, padx=35, pady=(0, 20))
 
     style = ttk.Style()
     style.theme_use("clam")
@@ -52,7 +65,6 @@ def show_stores_view(main_frame):
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    # הגדרת עמודות הטבלה - הוספנו את עמודת emp_count ראשונה (תופיע בצד שמאל)
     columns = ("emp_count", "region", "address", "website", "rating", "email", "phone", "name", "hidden_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
@@ -64,30 +76,31 @@ def show_stores_view(main_frame):
     tree.heading("website", text="כתובת אתר", anchor="center")
     tree.heading("address", text="כתובת פיזית", anchor="center")
     tree.heading("region", text="מחוז/אזור", anchor="center")
-    tree.heading("emp_count", text="צוות עובדים", anchor="center") # הכותרת החדשה
+    tree.heading("emp_count", text="מספר עובדים", anchor="center")
 
-    # הגדרת רוחב עמודות ויישור טקסט למרכז
-    tree.column("name", width=120, anchor="center")
-    tree.column("phone", width=100, anchor="center")
-    tree.column("email", width=140, anchor="center")
-    tree.column("rating", width=70, anchor="center")
-    tree.column("website", width=120, anchor="center")
-    tree.column("address", width=140, anchor="center")
-    tree.column("region", width=90, anchor="center")
-    tree.column("emp_count", width=110, anchor="center") # רוחב עמודת העובדים
-    
-    # הסתרת עמודת ה-ID מהתצוגה (אינדקס 8 בסוף)
+    # --- שדרוג והגדלת רוחב משמעותית: מניעת חיתוך ואישור מתיחה גמישה (stretch=tk.YES) ---
+    tree.column("name", width=320, anchor="e", stretch=tk.YES)       # מורחב ל-320 ומיושר לימין
+    tree.column("phone", width=140, anchor="center", stretch=tk.NO)
+    tree.column("email", width=220, anchor="center", stretch=tk.NO)
+    tree.column("rating", width=100, anchor="center", stretch=tk.NO)
+    tree.column("website", width=200, anchor="center", stretch=tk.NO)
+    tree.column("address", width=350, anchor="e", stretch=tk.YES)    # מורחב ל-350 ומיושר לימין
+    tree.column("region", width=120, anchor="center", stretch=tk.NO)
+    tree.column("emp_count", width=130, anchor="center", stretch=tk.NO)
     tree.column("hidden_id", width=0, stretch=tk.NO)
 
-    # --- הגדרת צבע כחול כהה מודגש לעמודת העובדים באמצעות תגיות ---
     tree.tag_configure("has_employees", foreground="#1E3A8A", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("no_employees", foreground="#6B7280", font=("Segoe UI", 12))
 
-    # הוספת Scrollbar מעוצב לטבלה
-    scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
-    tree.pack(fill="both", expand=True, padx=15, pady=15)
+    # בניית סרגלי הגלילה בצורה מעוגנת נכונה
+    v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
+    h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview)
+    
+    tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+    
+    h_scrollbar.pack(side="bottom", fill="x", padx=15, pady=(0, 10))
+    v_scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
+    tree.pack(side="right", fill="both", expand=True, padx=(15, 0), pady=15)
 
     # שורת כפתורי CRUD תחתונים
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -102,8 +115,7 @@ def show_stores_view(main_frame):
     refresh_table(tree)
 
 
-def refresh_table(tree):
-    """שליפת כל הסניפים בשילוב שאילתת LEFT JOIN ו-GROUP BY כדי לחשב כמות עובדים בזמן אמת"""
+def refresh_table(tree, search_query=""):
     for item in tree.get_children():
         tree.delete(item)
 
@@ -111,16 +123,28 @@ def refresh_table(tree):
     if conn:
         cursor = conn.cursor()
         try:
-            # שאילתה מתקדמת: סופרת כמה עובדים קשורים לכל StoreID
-            query = """
-                SELECT s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region,
-                       COUNT(e.EmployeeID) AS TotalEmployees
-                FROM STORE s
-                LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID
-                GROUP BY s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region
-                ORDER BY s.StoreID ASC;
-            """
-            cursor.execute(query)
+            if search_query:
+                query = """
+                    SELECT s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region,
+                           COUNT(e.EmployeeID) AS TotalEmployees
+                    FROM STORE s
+                    LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID
+                    WHERE s.StoreName ILIKE %s
+                    GROUP BY s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region
+                    ORDER BY s.StoreID ASC;
+                """
+                cursor.execute(query, (f"%{search_query}%",))
+            else:
+                query = """
+                    SELECT s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region,
+                           COUNT(e.EmployeeID) AS TotalEmployees
+                    FROM STORE s
+                    LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID
+                    GROUP BY s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region
+                    ORDER BY s.StoreID ASC;
+                """
+                cursor.execute(query)
+
             rows = cursor.fetchall()
             for row in rows:
                 web_val = row[5] if row[5] else "-"
@@ -128,11 +152,9 @@ def refresh_table(tree):
                 reg_val = row[7] if row[7] else "-"
                 emp_count = row[8]
                 
-                # עיצוב טקסט מספר העובדים עם אייקון ייעודי
-                emp_display = f"👥  {emp_count} עובדים" if emp_count > 0 else "👤  ללא עובדים"
+                emp_display = f"👥  {emp_count}" if emp_count > 0 else "0"
                 row_tag = "has_employees" if emp_count > 0 else "no_employees"
                 
-                # הכנסת הנתונים לטבלה לפי סדר העמודות החדש
                 tree.insert("", "end", values=(emp_display, reg_val, addr_val, web_val, f"⭐ {row[4]}/10", row[3], row[2], row[1], row[0]), tags=(row_tag,))
         except Exception as e:
             messagebox.showerror("שגיאה", f"נכשלה שליפת הנתונים: {e}")
@@ -142,7 +164,6 @@ def refresh_table(tree):
 
 
 def open_store_modal(tree, store_data=None):
-    """חלון קופץ נגלל עם כל השדות של טבלת STORE ללא שינוי (כמות עובדים היא שדה מחושב בלבד)"""
     is_edit = store_data is not None
     title_text = "✏️ עדכון פרטי סניף" if is_edit else "➕ הוספת סניף חדש לרשת"
     
@@ -284,9 +305,8 @@ def edit_selected_store(tree):
     
     item_values = tree.item(selected[0], 'values')
     
-    # שימי לב: האינדקסים זזו ב-1 קדימה בגלל עמודת כמות העובדים שהתווספה בהתחלה (אינדקס 0)
     store_data = {
-        'id': item_values[8],  # ה-ID הנסתר עבר לאינדקס 8
+        'id': item_values[8],  
         'name': item_values[7],
         'phone': item_values[6],
         'email': item_values[5],
@@ -305,7 +325,7 @@ def delete_selected_store(tree):
         return
     
     item_values = tree.item(selected[0], 'values')
-    store_id = item_values[8] # אינדקס 8 עבור ה-ID הנסתר
+    store_id = item_values[8] 
     store_name = item_values[7]
 
     confirm = messagebox.askyesno("אישור מחיקה", f"האם את בטוחה שברצונך למחוק את סניף '{store_name}'?")
@@ -323,10 +343,14 @@ def delete_selected_store(tree):
         except Exception as e:
             error_msg = str(e)
             if "foreign key constraint" in error_msg or "is still referenced" in error_msg:
-                messagebox.showerror("חסימת מחיקה - סניף פעיל", 
-                                     f"לא ניתן למחוק את סניף '{store_name}'!\n\n"
-                                     f"הסיבה: קיימים נתונים ברשת התלויים בסניף זה (עובדים שעובדים בו, מוצרים במלאי החנות, או הזמנות פתוחות).\n\n"
-                                     f"כדי למחוק את הסניף, יש להעביר או למחוק תחילה את העובדים והמלאי המשויכים אליו.")
+                messagebox.showerror(
+                    "לא ניתן למחוק - סניף פעיל ברשת", 
+                    f"פעולת המחיקה עבור סניף '{store_name}' נחסמה באופן מאובטח.\n\n"
+                    f"💡 מדוע זה קרה?\n"
+                    f"בסיס הנתונים מזהה שקיימים כרגע ברשת נתונים פעילים המשויכים ישירות לחנות הזו (עובדים הרשומים בסניף, סחורה קיימת במלאי, או הזמנות הפצה בתהליך).\n\n"
+                    f"🛠️ מה צריך לעשות עכשיו?\n"
+                    f"על מנת לבצע את המחיקה, יש להיכנס תחילה ללשוניות המתאימות (כמו 'ניהול עובדים' או 'מלאי') ולהעביר או למחוק את הרשומות המשויכות לסניף זה."
+                )
             else:
                 messagebox.showerror("שגיאה במחיקה", f"פעולת המחיקה נכשלה:\n{error_msg}")
         finally:

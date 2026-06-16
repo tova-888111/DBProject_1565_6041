@@ -13,23 +13,39 @@ def show_employees_view(main_frame):
     header_label.pack(pady=(30, 2), padx=35, fill="x")
     
     sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ופיטורין של צוות העובדים בכלל סניפי הרשת", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 20), padx=35, fill="x")
+    sub_header.pack(pady=(0, 15), padx=35, fill="x")
+
+    # --- שורת חיפוש עליונה לפי שם סניף ---
+    search_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
+    search_frame.pack(padx=35, fill="x", pady=(0, 15))
+    
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  סינון עובדים לפי שם סניף", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(10, 0))
+    
+    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף (למשל: ירושלים)...", font=("Segoe UI", 13), width=320, height=35, corner_radius=8, justify="right")
+    search_entry.pack(side="right")
+    
+    search_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_entry.get().strip()))
 
     # --- שורת כפתורי פעולה עליונה ---
     action_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     action_frame.pack(padx=35, fill="x", pady=(0, 15))
 
-    # כפתור רענון
-    refresh_btn = ctk.CTkButton(action_frame, text="🔄  רענן נתונים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=40, corner_radius=10, command=lambda: refresh_table(tree))
+    refresh_btn = ctk.CTkButton(action_frame, text="🔄  רענן נתונים", font=("Segoe UI", 13, "bold"), fg_color="#4B5563", hover_color="#374151", width=120, height=40, corner_radius=10, 
+                             command=lambda: [search_entry.delete(0, tk.END), refresh_table(tree)])
     refresh_btn.pack(side="left", padx=5)
 
-    # כפתור הוספת עובד
     add_btn = ctk.CTkButton(action_frame, text="➕  הוספת עובד חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=160, height=40, corner_radius=10, command=lambda: open_employee_modal(tree))
     add_btn.pack(side="right", padx=5)
 
     # --- אזור הטבלה המרכזי ---
     table_container = ctk.CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
-    table_container.pack(fill="both", expand=True, padx=35, pady=(0, 25))
+    table_container.pack(fill="both", expand=True, padx=35, pady=(0, 20))
+
+    # הגדרת משקלים (Weights) - כעת עמודה 1 (הטבלה) מתרחבת, ועמודה 0 (הגלילה) קבועה בצד שמאל
+    table_container.grid_rowconfigure(0, weight=1)
+    table_container.grid_columnconfigure(0, weight=0) # סרגל גלילה משמאל
+    table_container.grid_columnconfigure(1, weight=1) # הטבלה מימין
 
     style = ttk.Style()
     style.theme_use("clam")
@@ -52,11 +68,9 @@ def show_employees_view(main_frame):
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    # עמודות הטבלה - מציגות את שם הסניף באופן גלוי
     columns = ("store_name", "role", "salary", "status", "last_name", "first_name", "hidden_store_id", "hidden_emp_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
-    # כותרות העמודות
     tree.heading("first_name", text="שם פרטי", anchor="center")
     tree.heading("last_name", text="שם משפחה", anchor="center")
     tree.heading("status", text="סטטוס עבודה", anchor="center")
@@ -64,27 +78,27 @@ def show_employees_view(main_frame):
     tree.heading("role", text="תפקיד", anchor="center")
     tree.heading("store_name", text="משויך לסניף", anchor="center")
 
-    # הגדרת רוחב עמודות ויישור למרכז
-    tree.column("first_name", width=120, anchor="center")
-    tree.column("last_name", width=120, anchor="center")
-    tree.column("status", width=110, anchor="center")
-    tree.column("salary", width=110, anchor="center")
-    tree.column("role", width=130, anchor="center")
-    tree.column("store_name", width=160, anchor="center")
+    # הגדרת מתיחה דינמית לעמודות כדי שימלאו את כל שטח הבלוק בצורה סימטרית
+    tree.column("first_name", width=120, anchor="center", stretch=tk.YES)
+    tree.column("last_name", width=120, anchor="center", stretch=tk.YES)
+    tree.column("status", width=110, anchor="center", stretch=tk.YES)
+    tree.column("salary", width=110, anchor="center", stretch=tk.YES)
+    tree.column("role", width=250, anchor="center", stretch=tk.YES)        
+    tree.column("store_name", width=340, anchor="e", stretch=tk.YES)      
     
-    # עמודות טכניות מוסתרות המשמשות אותנו לעריכה ומחיקה מאחורי הקלעים
     tree.column("hidden_store_id", width=0, stretch=tk.NO)
     tree.column("hidden_emp_id", width=0, stretch=tk.NO)
 
-    # הגדרת צבעים דינמיים לפי סטטוס (Tags)
     tree.tag_configure("active_status", foreground="#10B981", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("inactive_status", foreground="#EF4444", font=("Segoe UI", 12, "bold"))
 
-    # Scrollbar
-    scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=scrollbar.set)
-    scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
-    tree.pack(fill="both", expand=True, padx=15, pady=15)
+    # יצירת סרגל גלילה אנכי בלבד (ללא גלילה אופקית)
+    v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
+    tree.configure(yscrollcommand=v_scrollbar.set)
+    
+    # --- מיקום מעודכן: סרגל הגלילה בעמודה 0 (שמאל) והטבלה בעמודה 1 (ימין) ---
+    v_scrollbar.grid(row=0, column=0, sticky="ns", pady=15, padx=(15, 0))
+    tree.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
     # שורת כפתורי CRUD תחתונים
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -99,8 +113,7 @@ def show_employees_view(main_frame):
     refresh_table(tree)
 
 
-def refresh_table(tree):
-    """שליפת נתוני העובדים בשילוב JOIN עם טבלת STORE כדי להציג את שם הסניף בטבלה"""
+def refresh_table(tree, store_search_query=""):
     for item in tree.get_children():
         tree.delete(item)
 
@@ -108,13 +121,24 @@ def refresh_table(tree):
     if conn:
         cursor = conn.cursor()
         try:
-            query = """
-                SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
-                FROM EMPLOYEE e
-                JOIN STORE s ON e.StoreID = s.StoreID
-                ORDER BY e.EmployeeID ASC;
-            """
-            cursor.execute(query)
+            if store_search_query:
+                query = """
+                    SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
+                    FROM EMPLOYEE e
+                    JOIN STORE s ON e.StoreID = s.StoreID
+                    WHERE s.StoreName ILIKE %s
+                    ORDER BY e.EmployeeID ASC;
+                """
+                cursor.execute(query, (f"%{store_search_query}%",))
+            else:
+                query = """
+                    SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
+                    FROM EMPLOYEE e
+                    JOIN STORE s ON e.StoreID = s.StoreID
+                    ORDER BY e.EmployeeID ASC;
+                """
+                cursor.execute(query)
+
             rows = cursor.fetchall()
             for row in rows:
                 status_val = str(row[3]).strip()
@@ -125,7 +149,6 @@ def refresh_table(tree):
                 else:
                     row_tag = "inactive_status"
                 
-                # עמודה 0 (store_name) מציגה את שם הסניף. עמודה 6 (hidden_store_id) שומרת את ה-ID לעריכה.
                 tree.insert("", "end", values=(row[7], row[5], salary_display, status_val, row[2], row[1], row[6], row[0]), tags=(row_tag,))
         except Exception as e:
             messagebox.showerror("שגיאה", f"נכשלה שליפת נתוני עובדים: {e}")
@@ -135,7 +158,6 @@ def refresh_table(tree):
 
 
 def get_all_store_ids():
-    """שליפת רשימת ה-IDs של כל הסניפים הקיימים לצורך בחירה במודל"""
     store_ids = []
     conn = get_db_connection()
     if conn:
@@ -153,7 +175,6 @@ def get_all_store_ids():
 
 
 def open_employee_modal(tree, employee_data=None):
-    """חלון קופץ שבו הבחירה היא לפי קוד סניף (ID) בצורה חד-חד ערכית"""
     is_edit = employee_data is not None
     title_text = "✏️ עדכון פרטי עובד" if is_edit else "➕ הוספת עובד חדש לרשת"
     
@@ -181,14 +202,12 @@ def open_employee_modal(tree, employee_data=None):
 
     ctk.CTkLabel(scrollable_frame, text=title_text, font=("Segoe UI", 20, "bold"), text_color="#111827").pack(pady=(25, 20))
 
-    # שליפת מפתחות ה-ID של הסניפים
     available_store_ids = get_all_store_ids()
     if not available_store_ids:
         available_store_ids = ["אין סניפים"]
 
     status_options = ["Active", "Inactive"]
 
-    # המודל מציג למשתמש לבחור "קוד סניף משויך (ID)"
     fields_config = [
         {"label": "תעודת זהות עובד מספר", "key": "id", "type": "entry"},
         {"label": "שם פרטי", "key": "first_name", "type": "entry"},
@@ -307,7 +326,6 @@ def edit_selected_employee(tree):
     
     item_values = tree.item(selected[0], 'values')
     
-    # שליפת הנתונים: קוד הסניף הנסתר (hidden_store_id) נמצא באינדקס 6, ותעודת הזהות באינדקס 7
     employee_data = {
         'id': item_values[7],
         'first_name': item_values[5],
@@ -315,7 +333,7 @@ def edit_selected_employee(tree):
         'status': item_values[3].strip(),
         'salary': item_values[2].replace("₪", "").replace(",", "").strip(),
         'role': item_values[1],
-        'store_id': item_values[6]  # כאן אנחנו שולפים את ה-ID המקורי ולא את השם!
+        'store_id': item_values[6]
     }
     open_employee_modal(tree, employee_data)
 
@@ -327,7 +345,6 @@ def delete_selected_employee(tree):
         return
     
     item_values = tree.item(selected[0], 'values')
-    # תעודת הזהות נמצאת באינדקס 7
     emp_id = item_values[7]
     emp_name = f"{item_values[5]} {item_values[4]}"
 

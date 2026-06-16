@@ -8,7 +8,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from dashboard_screen import show_dashboard_view
 from stores_screen import show_stores_view
-from employees_screen import show_employees_view 
+from employees_screen import show_employees_view
+from warehouses_screen import show_warehouses_view 
 from discounts_screen import show_discounts_view
 
 class RamiLeviApp(ctk.CTk):
@@ -51,7 +52,7 @@ class RamiLeviApp(ctk.CTk):
         self.create_sidebar_button("dashboard", "📊   לוח בקרה רשתי", self.open_dashboard)
         self.create_sidebar_button("stores", "🏪   ניהול סניפים", lambda: [self.set_active_button("stores"), show_stores_view(self.main_frame)])
         self.create_sidebar_button("employees", "👥   ניהול עובדים", lambda: [self.set_active_button("employees"), show_employees_view(self.main_frame)])
-        self.create_sidebar_button("warehouses", "🏭   מחסנים לוגיסטיים", lambda: self.placeholder_screen("warehouses", "מחסנים לוגיסטיים"))
+        self.create_sidebar_button("warehouses", "🏭   מחסנים לוגיסטיים", lambda: [self.set_active_button("warehouses"), show_warehouses_view(self.main_frame)])
         self.create_sidebar_button("inventory", "📦   מלאי ומוצרים", lambda: self.placeholder_screen("inventory", "מלאי ומוצרים"))
         self.create_sidebar_button("suppliers", "🚚   ספקים ורכש", lambda: self.placeholder_screen("suppliers", "ספקים ורכש"))
         self.create_sidebar_button("orders", "🛒   הזמנות הפצה", lambda: self.placeholder_screen("orders", "הזמנות הפצה"))
