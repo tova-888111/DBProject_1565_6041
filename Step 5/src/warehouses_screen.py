@@ -22,8 +22,9 @@ def show_warehouses_view(main_frame):
                              text_color="#111827")
     tabview.pack(fill="both", expand=True, padx=35, pady=(0, 20))
 
+    # --- שדרוג: הגדלת כפתורי הטאבים למעלה שיהיו בולטים וגדולים משמעותית ---
     try:
-        tabview._segmented_button.configure(font=("Segoe UI", 13, "bold"))
+        tabview._segmented_button.configure(font=("Segoe UI", 15, "bold"), height=45)
     except:
         pass
 
@@ -39,17 +40,25 @@ def show_warehouses_view(main_frame):
 # 📑 טאב 1: מחסנים וצוות ניהול
 # =========================================================================
 def setup_combined_warehouses_tab(tab):
-    # --- שורת חיפוש עליונה (חדש!) ---
+    # --- שורת חיפוש עליונה מתוקנת ומסודרת מימין לשמאל ללא סימנים הפוכים ---
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 10))
     
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍  חיפוש לפי קוד מחסן או שם מנהל:", font=("Segoe UI", 12, "bold"), text_color="#374151")
-    search_lbl.pack(side="right", padx=(10, 0))
+    # תווית ההסבר ממוקמת ראשונה מימין
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(10, 15))
     
-    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי קוד מחסן או שם מנהל לסינון...", font=("Segoe UI", 12), width=300, height=35, corner_radius=8, justify="right")
-    search_entry.pack(side="right")
+    # תיבת קוד מחסן - שנייה מימין
+    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_id_entry.pack(side="right", padx=(0, 15))
     
-    search_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_entry.get().strip()))
+    # תיבת שם מנהל - שלישית מימין (משמאל לקוד)
+    search_name_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי שם מנהל", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_name_entry.pack(side="right")
+    
+    # הפעלת המסננים המשולבים בהקלדה
+    search_id_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
+    search_name_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
 
     # שורת פעולות עליונה - הוספות
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
@@ -98,30 +107,28 @@ def setup_combined_warehouses_tab(tab):
     refresh_combined_warehouses_data(tree)
 
 
-def refresh_combined_warehouses_data(tree, search_query=""):
+def refresh_combined_warehouses_data(tree, search_id="", search_name=""):
     for item in tree.get_children(): tree.delete(item)
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
         
-        # תמיכה בסינון דינמי לפי קוד מחסן או שם מנהל
-        if search_query:
-            query = """
-                SELECT w.WarehouseID, w.Region, w.Address, wm.WarehouseManager
-                FROM WAREHOUSE w
-                LEFT JOIN WAREHOUSEMANAGER wm ON w.WarehouseID = wm.WarehouseID
-                WHERE CAST(w.WarehouseID AS TEXT) LIKE %s OR wm.WarehouseManager ILIKE %s
-                ORDER BY w.WarehouseID ASC;
-            """
-            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%"))
-        else:
-            query = """
-                SELECT w.WarehouseID, w.Region, w.Address, wm.WarehouseManager
-                FROM WAREHOUSE w
-                LEFT JOIN WAREHOUSEMANAGER wm ON w.WarehouseID = wm.WarehouseID
-                ORDER BY w.WarehouseID ASC;
-            """
-            cursor.execute(query)
+        query = """
+            SELECT w.WarehouseID, w.Region, w.Address, wm.WarehouseManager
+            FROM WAREHOUSE w
+            LEFT JOIN WAREHOUSEMANAGER wm ON w.WarehouseID = wm.WarehouseID
+            WHERE 1=1
+        """
+        params = []
+        if search_id and search_id.isdigit():
+            query += " AND w.WarehouseID = %s"
+            params.append(int(search_id))
+        if search_name:
+            query += " AND wm.WarehouseManager ILIKE %s"
+            params.append(f"%{search_name}%")
+            
+        query += " ORDER BY w.WarehouseID ASC;"
+        cursor.execute(query, tuple(params))
             
         for row in cursor.fetchall():
             manager_val = row[3] if row[3] else "❌ טרם שויך מנהל"
@@ -186,19 +193,20 @@ def open_warehouse_modal(tree, edit_data=None):
                 cursor.close()
                 conn.close()
 
-    ctk.CTkButton(modal, text="💾 שמור מחסן", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+    ctk.CTkButton(modal, text="שמור", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+
 
 def edit_warehouse(tree):
     sel = tree.selection()
     if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה מהטבלה לצורך עריכה.")
     open_warehouse_modal(tree, tree.item(sel[0], 'values'))
 
+
 def delete_warehouse(tree):
     sel = tree.selection()
     if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי מחסן למחיקה.")
     vals = tree.item(sel[0], 'values')
     w_id = vals[3]
-    w_name = vals[2]
     if messagebox.askyesno("אישור סגירה", f"האם את בטוחה שברצונך לסגור ולמחוק את מחסן מספר {w_id}?"):
         conn = get_db_connection()
         if conn:
@@ -209,15 +217,14 @@ def delete_warehouse(tree):
                 refresh_combined_warehouses_data(tree)
             except Exception as e:
                 error_msg = str(e)
-                # הודעה ידידותית ומפורטת למשתמש במקרה של תלות במפתח זר כנדרש!
                 if "foreign key constraint" in error_msg or "is still referenced" in error_msg:
                     messagebox.showerror(
                         "לא ניתן למחוק - מחסן פעיל", 
                         f"פעולת המחיקה עבור מחסן מספר {w_id} נחסמה באופן מאובטח.\n\n"
                         f"💡 מדוע זה קרה?\n"
-                        f"בסיס הנתונים מזהה שקיימים כרגע במערכת נתונים התלויים ישירות במחסן זה (מוצרים שממוקמים במעברים שלו, או מנהל הרשום בו).\n\n"
+                        f"קיימים כרגע במערכת נתונים התלויים ישירות במחסן זה (מוצרים שממוקמים במעברים שלו, או מנהל הרשום בו).\n\n"
                         f"🛠️ מה צריך לעשות עכשיו?\n"
-                        f"יש לפנות תחילה את כל המוצרים מהמלאי המשויכים למחסן זה (בטאב איתור מוצרים) ולבטל את מינוי המנהל, ורק אז ניתן יהיה למחוק את המחסן."
+                        f"יש לפנות תחילה את כל המוצרים מהמלאי המשויכים למחסן זה (בלשונית איתור מוצרים) ולבטל את מינוי המנהל, ורק אז ניתן יהיה למחוק את המחסן."
                     )
                 else:
                     messagebox.showerror("שגיאה במחיקה", f"פעולת המחיקה נכשלה:\n{error_msg}")
@@ -285,8 +292,8 @@ def open_manager_add_modal(tree):
                 cursor.close()
                 conn.close()
 
-    # תוקן הטקסט ל-"בצע מינוי" הידידותי והנכון כפי שביקשת
-    ctk.CTkButton(modal, text="✅ בצע מינוי", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+    ctk.CTkButton(modal, text="בצע", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+
 
 def edit_manager(tree):
     sel = tree.selection()
@@ -326,7 +333,8 @@ def edit_manager(tree):
             modal.destroy()
             refresh_combined_warehouses_data(tree)
 
-    ctk.CTkButton(modal, text="💾 עדכן מינוי", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+    ctk.CTkButton(modal, text="שמור", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+
 
 def delete_manager(tree):
     sel = tree.selection()
@@ -340,28 +348,40 @@ def delete_manager(tree):
         conn = get_db_connection()
         if conn:
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM WAREHOUSEMANAGER WHERE WarehouseManager=%s AND WarehouseID=%s;", (mgr_name, int(w_id)))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            refresh_combined_warehouses_data(tree)
+            try:
+                cursor.execute("DELETE FROM WAREHOUSEMANAGER WHERE WarehouseManager=%s AND WarehouseID=%s;", (mgr_name, int(w_id)))
+                conn.commit()
+                refresh_combined_warehouses_data(tree)
+            except Exception as e:
+                messagebox.showerror("حסימת מחיקה", f"לא ניתן לבצע את הפעולה עקב תלות במערכת:\n{e}")
+            finally:
+                cursor.close()
+                conn.close()
 
 
 # =========================================================================
-# 📑 טאב 2: איתור ומיקומי מוצרים במלאי (LOCATED)
+# 📦 טאב 2: איתור ומיקומי מוצרים במלאי
 # =========================================================================
 def setup_located_products_tab(tab):
-    # --- שורת חיפוש עליונה כפולה (חדש!) ---
+    # --- שורת חיפוש עליונה מפוצלת ומסודרת מימין לשמאל ללא סימנים הפוכים ---
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 10))
     
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍  חיפוש לפי קוד מחסן או קוד מוצר:", font=("Segoe UI", 12, "bold"), text_color="#374151")
-    search_lbl.pack(side="right", padx=(10, 0))
+    # תווית ההסבר ממוקמת ראשונה מימין
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(10, 15))
     
-    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי קוד מחסן או קוד מוצר לסינון...", font=("Segoe UI", 12), width=320, height=35, corner_radius=8, justify="right")
-    search_entry.pack(side="right")
+    # תיבת קוד מחסן - שנייה מימין
+    search_wh_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_wh_entry.pack(side="right", padx=(0, 15))
     
-    search_entry.bind("<KeyRelease>", lambda event: refresh_located_data(tree, search_entry.get().strip()))
+    # תיבת קוד מוצר - שלישית מימין (משמאל למחסן)
+    search_prod_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מוצר מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_prod_entry.pack(side="right")
+    
+    # הפעלת הסינונים בהקלדה
+    search_wh_entry.bind("<KeyRelease>", lambda event: refresh_located_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
+    search_prod_entry.bind("<KeyRelease>", lambda event: refresh_located_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
 
     # שורת פעולות
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
@@ -375,7 +395,6 @@ def setup_located_products_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
-    # --- תוקן: עמודות מופרדות לקוד מחסן וכתובת מחסן במקום העמודה הישנה המאוחדת ---
     columns = ("shelf_nb", "aisle_nb", "warehouse_addr", "warehouse_id", "product_name", "product_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
     
@@ -388,8 +407,8 @@ def setup_located_products_tab(tab):
 
     tree.column("product_id", width=100, anchor="center", stretch=tk.YES)
     tree.column("product_name", width=200, anchor="e", stretch=tk.YES)
-    tree.column("warehouse_id", width=100, anchor="center", stretch=tk.YES) # מוצג נקי קוד בלבד כפי שביקשת
-    tree.column("warehouse_addr", width=220, anchor="e", stretch=tk.YES) # עמודת הכתובת החדשה והמרווחת
+    tree.column("warehouse_id", width=100, anchor="center", stretch=tk.YES) 
+    tree.column("warehouse_addr", width=220, anchor="e", stretch=tk.YES) 
     tree.column("aisle_nb", width=110, anchor="center", stretch=tk.YES)
     tree.column("shelf_nb", width=110, anchor="center", stretch=tk.YES)
 
@@ -407,35 +426,31 @@ def setup_located_products_tab(tab):
     refresh_located_data(tree)
 
 
-def refresh_located_data(tree, search_query=""):
+def refresh_located_data(tree, search_wh="", search_prod=""):
     for item in tree.get_children(): tree.delete(item)
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
         
-        # תמיכה בחיפוש לפי קוד מחסן או קוד מוצר
-        if search_query:
-            query = """
-                SELECT l.ProductID, p.ProductName, l.WarehouseID, w.Address, l.AisleNb, l.ShelfNb
-                FROM LOCATED l
-                JOIN PRODUCT p ON l.ProductID = p.ProductID
-                JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
-                WHERE CAST(l.WarehouseID AS TEXT) LIKE %s OR CAST(l.ProductID AS TEXT) LIKE %s
-                ORDER BY l.WarehouseID ASC, l.AisleNb ASC;
-            """
-            cursor.execute(query, (f"%{search_query}%", f"%{search_query}%"))
-        else:
-            query = """
-                SELECT l.ProductID, p.ProductName, l.WarehouseID, w.Address, l.AisleNb, l.ShelfNb
-                FROM LOCATED l
-                JOIN PRODUCT p ON l.ProductID = p.ProductID
-                JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
-                ORDER BY l.WarehouseID ASC, l.AisleNb ASC;
-            """
-            cursor.execute(query)
+        query = """
+            SELECT l.ProductID, p.ProductName, l.WarehouseID, w.Address, l.AisleNb, l.ShelfNb
+            FROM LOCATED l
+            JOIN PRODUCT p ON l.ProductID = p.ProductID
+            JOIN WAREHOUSE w ON l.WarehouseID = w.WarehouseID
+            WHERE 1=1
+        """
+        params = []
+        if search_wh and search_wh.isdigit():
+            query += " AND l.WarehouseID = %s"
+            params.append(int(search_wh))
+        if search_prod and search_prod.isdigit():
+            query += " AND l.ProductID = %s"
+            params.append(int(search_prod))
+            
+        query += " ORDER BY l.WarehouseID ASC, l.AisleNb ASC;"
+        cursor.execute(query, tuple(params))
             
         for row in cursor.fetchall():
-            # מוזן בדיוק לפי העמודות המופרדות החדשות: shelf, aisle, address, w_id, prod_name, prod_id
             tree.insert("", "end", values=(row[5], row[4], row[3], row[2], row[1], row[0]))
         cursor.close()
         conn.close()
@@ -482,7 +497,6 @@ def open_located_modal(tree, edit_data=None):
     w_option.pack(fill="x", padx=40, pady=2)
 
     if is_edit:
-        # שליפת הנתונים לפי האינדקסים החדשים: קוד מוצר נמצא באינדקס 5, קוד מחסן באינדקס 3
         for prod_str in products_list:
             if prod_str.startswith(str(edit_data[5]) + " -"): p_option.set(prod_str)
         p_option.configure(state="disabled")
@@ -532,7 +546,7 @@ def open_located_modal(tree, edit_data=None):
                 cursor.close()
                 conn.close()
 
-    ctk.CTkButton(modal, text="💾 שמור מיקום מלאי", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+    ctk.CTkButton(modal, text="שמור", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
 
 
 def edit_located(tree):
@@ -545,9 +559,8 @@ def delete_located(tree):
     sel = tree.selection()
     if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה לפינוי מהמלאי.")
     vals = tree.item(sel[0], 'values')
-    p_id = vals[5] # אינדקס 5 עבור קוד מוצר
-    w_id = vals[3] # אינדקס 3 עבור קוד מחסן
-    p_name = vals[4]
+    p_id = vals[5] 
+    w_id = vals[3] 
     
     if messagebox.askyesno("אישור פינוי", f"האם את בטוחה שברצונך לפנות את המוצר מספר '{p_id}' ממחסן מספר {w_id}?"):
         conn = get_db_connection()
@@ -558,7 +571,12 @@ def delete_located(tree):
                 conn.commit()
                 refresh_located_data(tree)
             except Exception as e:
-                messagebox.showerror("שגיאה בפינוי", f"פעולת הפינוי נכשלה:\n{e}")
+                messagebox.showerror(
+                    "חסימת פינוי מלאי", 
+                    f"לא ניתן לפנות את מוצר מספר {p_id} ממחסן {w_id}.\n\n"
+                    f"הסיבה: קיימות רשומות רשת התלויות במיקום מוצר זה (כגון הזמנות הפצה פתוחות או תלויות מלאי ספקים).\n"
+                    f"אנא ודאי שאין תלויות לוגיסטיות פעילות לפני הפינוי."
+                )
             finally:
                 cursor.close()
                 conn.close()

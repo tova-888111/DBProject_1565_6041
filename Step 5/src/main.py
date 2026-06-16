@@ -10,6 +10,9 @@ from dashboard_screen import show_dashboard_view
 from stores_screen import show_stores_view
 from employees_screen import show_employees_view
 from warehouses_screen import show_warehouses_view 
+from inventory_screen import show_inventory_view
+from suppliers_screen import show_suppliers_view
+from orders_screen import show_orders_view
 from discounts_screen import show_discounts_view
 
 class RamiLeviApp(ctk.CTk):
@@ -53,9 +56,9 @@ class RamiLeviApp(ctk.CTk):
         self.create_sidebar_button("stores", "🏪   ניהול סניפים", lambda: [self.set_active_button("stores"), show_stores_view(self.main_frame)])
         self.create_sidebar_button("employees", "👥   ניהול עובדים", lambda: [self.set_active_button("employees"), show_employees_view(self.main_frame)])
         self.create_sidebar_button("warehouses", "🏭   מחסנים לוגיסטיים", lambda: [self.set_active_button("warehouses"), show_warehouses_view(self.main_frame)])
-        self.create_sidebar_button("inventory", "📦   מלאי ומוצרים", lambda: self.placeholder_screen("inventory", "מלאי ומוצרים"))
-        self.create_sidebar_button("suppliers", "🚚   ספקים ורכש", lambda: self.placeholder_screen("suppliers", "ספקים ורכש"))
-        self.create_sidebar_button("orders", "🛒   הזמנות הפצה", lambda: self.placeholder_screen("orders", "הזמנות הפצה"))
+        self.create_sidebar_button("inventory", "📦   מלאי ומוצרים", lambda: [self.set_active_button("inventory"), show_inventory_view(self.main_frame)])
+        self.create_sidebar_button("suppliers", "🚚   ספקים ורכש", lambda: [self.set_active_button("suppliers"), show_suppliers_view(self.main_frame)])
+        self.create_sidebar_button("orders", "🛒   הזמנות הפצה", lambda: [self.set_active_button("orders"), show_orders_view(self.main_frame)])
         self.create_sidebar_button("discounts", "🏷️   מבצעים והנחות", lambda: [self.set_active_button("discounts"), show_discounts_view(self.main_frame)])
 
         # פרופיל משתמש מעוגל בתחתית
