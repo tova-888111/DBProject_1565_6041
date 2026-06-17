@@ -10,11 +10,11 @@ def show_inventory_view(main_frame):
         widget.destroy()
 
     # --- כותרת עליונה ראשית ---
-    header_label = ctk.CTkLabel(main_frame, text="ניהול מלאי וקטלוג מוצרים רשתי", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
-    header_label.pack(pady=(30, 2), padx=35, fill="x")
+    header_label = ctk.CTkLabel(main_frame, text="ניהול מלאי וקטלוג מוצרים רשתי", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
+    header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="ניהול פריטי הקטלוג, מחלקות הרשת, רמות מלאי בסניפים וסטטוסי כשרות", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 15), padx=35, fill="x")
+    sub_header = ctk.CTkLabel(main_frame, text="ניהול פריטי הקטלוג, מחלקות הרשת, רמות מלאי בסניפים וסטטוסי כשרות", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
+    sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
     # --- מערכת הטאבים המרכזית (Tabview) ---
     tabview = ctk.CTkTabview(main_frame, corner_radius=12, fg_color="#F3F4F6", segmented_button_fg_color="#E5E7EB",
@@ -41,12 +41,11 @@ def show_inventory_view(main_frame):
 # 📑 טאב 1: קטלוג מוצרים וכשרות (PRODUCT + PRODUCT_KASHRUT)
 # =========================================================================
 def setup_products_tab(tab):
-    # --- תיקון: שורת מסנני חיפוש סימטרית ואחידה באמצעות מנגנון Grid ---
+    # שורת מסנני חיפוש סימטרית ואחידה באמצעות מנגנון Grid
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 12))
     
-    # הגדרת עמודות ב-Grid כדי ליישר את התיבות באופן מושלם מימין לשמאל
-    search_frame.grid_columnconfigure(0, weight=1) # שטח ריק משמאל
+    search_frame.grid_columnconfigure(0, weight=1) 
     
     search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.grid(row=0, column=5, padx=(10, 15), sticky="e")
@@ -57,13 +56,12 @@ def setup_products_tab(tab):
     search_name_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי שם מוצר", font=("Segoe UI", 12), width=145, height=35, corner_radius=8, justify="right")
     search_name_entry.grid(row=0, column=3, padx=6, sticky="e")
 
-    search_cat_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי שם קטגוריה", font=("Segoe UI", 12), width=145, height=35, corner_radius=8, justify="right")
+    search_cat_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי קוד קטגוריה", font=("Segoe UI", 12), width=145, height=35, corner_radius=8, justify="right")
     search_cat_entry.grid(row=0, column=2, padx=6, sticky="e")
 
     search_kashrut_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי סוג כשרות", font=("Segoe UI", 12), width=145, height=35, corner_radius=8, justify="right")
     search_kashrut_entry.grid(row=0, column=1, padx=6, sticky="e")
 
-    # קשירת אירועים לרענון הסינון
     search_id_entry.bind("<KeyRelease>", lambda event: refresh_products_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip(), search_cat_entry.get().strip(), search_kashrut_entry.get().strip()))
     search_name_entry.bind("<KeyRelease>", lambda event: refresh_products_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip(), search_cat_entry.get().strip(), search_kashrut_entry.get().strip()))
     search_cat_entry.bind("<KeyRelease>", lambda event: refresh_products_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip(), search_cat_entry.get().strip(), search_kashrut_entry.get().strip()))
@@ -73,16 +71,36 @@ def setup_products_tab(tab):
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(0, 10))
     
-    # הגדרת כשרות חדשה עצמאית - כבר לא דורשת בחירת שורה מראש!
-    ctk.CTkButton(btn_frame, text="📜 הגדרת כשרות חדשה", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: open_kashrut_modal(tree, mode="add")).pack(side="left", padx=5)
+    ctk.CTkButton(btn_frame, text="📜 הגדרת כשרות חדשה", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_kashrut_modal(tree, mode="add")).pack(side="left", padx=5)
     ctk.CTkButton(btn_frame, text="➕ הוספת מוצר חדש", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_product_modal(tree)).pack(side="right", padx=5)
 
-    # מיכל הטבלה
     table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=12, border_color="#E5E7EB", border_width=1)
     table_container.pack(fill="both", expand=True, pady=5)
     table_container.grid_rowconfigure(0, weight=1)
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    
+    # --- ✨ תיקון צבע: שינוי כיתוב הטבלה בקטלוג לכחול הכהה והבולט המודגש המבוקש ---
+    style.configure("Custom.Treeview",
+                    background="#FFFFFF",
+                    foreground="#1E3A8A", # כחול כהה
+                    rowheight=40,
+                    fieldbackground="#FFFFFF",
+                    font=("Segoe UI", 12, "bold"), # מודגש
+                    borderwidth=0,
+                    relief="flat")
+    
+    style.configure("Custom.Treeview.Heading",
+                    background="#F9FAFB",
+                    foreground="#4B5563",
+                    font=("Segoe UI", 13, "bold"),
+                    relief="flat",
+                    borderwidth=0)
+    
+    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
     columns = ("kashrut", "exp_date", "prod_date", "category_name", "brand", "price", "product_name", "product_id", "hidden_cat_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
@@ -106,6 +124,7 @@ def setup_products_tab(tab):
     tree.column("kashrut", width=220, anchor="center", stretch=tk.NO)       
     tree.column("hidden_cat_id", width=0, stretch=tk.NO)
 
+    # החזרת הגלילות האופקית והאנכית
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview)
     tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
@@ -117,7 +136,7 @@ def setup_products_tab(tab):
     actions = ctk.CTkFrame(tab, fg_color="transparent")
     actions.pack(fill="x", pady=(10, 5))
     
-    ctk.CTkButton(actions, text="✏️ עריכת פרטי מוצר", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: edit_product(tree)).pack(side="right", padx=5)
+    ctk.CTkButton(actions, text="✏️ עריכת פרטי מוצר", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_product(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ מחיקת מוצר מהקטלוג", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_product(tree)).pack(side="right", padx=25)
     
     ctk.CTkButton(actions, text="🗑️ הסרת כשרות", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_kashrut(tree)).pack(side="left", padx=5)
@@ -126,7 +145,7 @@ def setup_products_tab(tab):
     refresh_products_data(tree)
 
 
-def refresh_products_data(tree, search_id="", search_name="", search_cat="", search_kashrut=""):
+def refresh_products_data(tree, search_id="", search_name="", search_cat_id="", search_kashrut=""):
     for item in tree.get_children(): tree.delete(item)
     conn = get_db_connection()
     if conn:
@@ -145,9 +164,11 @@ def refresh_products_data(tree, search_id="", search_name="", search_cat="", sea
         if search_name:
             query += " AND p.ProductName ILIKE %s"
             params.append(f"%{search_name}%")
-        if search_cat:
-            query += " AND c.CategoryName ILIKE %s"
-            params.append(f"%{search_cat}%")
+        if search_cat_id and search_cat_id.isdigit():
+            query += " AND p.CategoryID = %s"
+            params.append(int(search_cat_id))
+        if search_name and not search_cat_id:
+            pass
         if search_kashrut:
             query += " AND pk.Kashrut ILIKE %s"
             params.append(f"%{search_kashrut}%")
@@ -237,7 +258,7 @@ def open_product_modal(tree, edit_data=None):
         cat_sel = cat_option.get()
 
         if not p_id or not p_name or not price or not brand or not p_date or not e_date or cat_sel.startswith("אין"):
-            messagebox.showwarning("שדות חסרים", "אנא מלאי את כל השדות בצורה תקינה.")
+            messagebox.showwarning("שדות חסרים", "אנא מלאי את כל שדות החובה בצורה תקינה.")
             return
 
         try:
@@ -319,7 +340,6 @@ def delete_product(tree):
 
 
 def open_kashrut_modal(tree, mode="add"):
-    """חלון מודל משופר: במצב הוספה, מאפשר בחירה של מוצר מתוך תפריט נפתח ללא חובה לבחור שורה מקודם!"""
     modal = ctk.CTkToplevel()
     modal.title("עריכת כשרות" if mode=="edit" else "הגדרת כשרות")
     modal.geometry("400x320")
@@ -350,7 +370,6 @@ def open_kashrut_modal(tree, mode="add"):
             return messagebox.showwarning("בחירה חובה", "אנא בחרי מוצר מהטבלה לצורך שינוי כשרות קיימת.")
         vals = tree.item(sel[0], 'values')
         p_id = vals[7]
-        p_name = vals[6]
         old_kashrut = vals[0]
         if old_kashrut == "❌ לא הוגדרה כשרות":
             modal.destroy()
@@ -369,17 +388,21 @@ def open_kashrut_modal(tree, mode="add"):
                 break
         p_option.configure(state="disabled")
 
-    kashrut_options = ["רבנות מקומית", "בד''ץ העדה החרדית", "הרב לנדא", "בד''ץ בית יוסף", "מהדרין רבנות"]
     ctk.CTkLabel(modal, text="סוג הכשרות המאושר", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
-    k_option = ctk.CTkOptionMenu(modal, values=kashrut_options)
-    k_option.pack(fill="x", padx=40, pady=5)
-    if old_kashrut in kashrut_options: k_option.set(old_kashrut)
+    k_entry = ctk.CTkEntry(modal, justify="right")
+    k_entry.pack(fill="x", padx=40, pady=5)
+    if old_kashrut and old_kashrut != "❌ לא הוגדרה כשרות":
+        k_entry.insert(0, old_kashrut)
 
     def save():
         p_sel = p_option.get()
-        k_val = k_option.get()
+        k_val = k_entry.get().strip() 
+        
         if p_sel.startswith("אין"):
             messagebox.showwarning("שגיאה", "לא נבחר מוצר תקין.")
+            return
+        if not k_val:
+            messagebox.showwarning("שדה חסר", "אנא הקלידי את סטטוס הכשרות.")
             return
             
         target_p_id = int(p_sel.split(" - ")[0])
@@ -424,7 +447,7 @@ def delete_kashrut(tree):
 
 
 # =========================================================================
-# 🗂️ טאב 2: קטגוריות (שדרוג: שורות פעילות מודגשות בירוק!)
+# 🗂️ טאב 2: קטגוריות
 # =========================================================================
 def setup_categories_tab(tab):
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
@@ -448,8 +471,9 @@ def setup_categories_tab(tab):
     tree.column("category_name", width=350, anchor="e", stretch=tk.YES)
     tree.column("status", width=180, anchor="center", stretch=tk.YES)
 
-    # --- שדרוג: הגדרת תגית צבע ירוק רך ואלגנטי לשורות של קטגוריות פעילות ---
+    # --- ✨ תיקון צבע: הגדרת תגית אדומה עדינה עבור שורה שאינה פעילה במערכת ---
     tree.tag_configure("active_cat", background="#E8F5E9", foreground="#155724")
+    tree.tag_configure("inactive_cat", background="#FEF2F2", foreground="#991B1B")
 
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=v_scrollbar.set)
@@ -458,6 +482,7 @@ def setup_categories_tab(tab):
 
     actions = ctk.CTkFrame(tab, fg_color="transparent")
     actions.pack(fill="x", pady=(10, 5))
+    
     ctk.CTkButton(actions, text="✏️ עריכת קטגוריה", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_category(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ מחיקת קטגוריה מהרשת", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_category(tree)).pack(side="right", padx=25)
 
@@ -473,10 +498,11 @@ def refresh_categories_data(tree):
         for row in cursor.fetchall():
             if row[2] == 1:
                 status_text = "🟢 פעילה במערכת"
-                row_tag = "active_cat" # צביעת השורה כולה בירוק
+                row_tag = "active_cat" 
             else:
+                # --- ✨ תיקון צבע: החלת התגית האדומה על שורה לא פעילה ---
                 status_text = "🔴 לא פעילה"
-                row_tag = ""
+                row_tag = "inactive_cat"
             tree.insert("", "end", values=(status_text, row[1], row[0]), tags=(row_tag,))
         cursor.close()
         conn.close()
@@ -626,7 +652,9 @@ def setup_inventory_tab(tab):
     tree.column("quantity", width=110, anchor="center", stretch=tk.YES)
     tree.column("min_stock", width=110, anchor="center", stretch=tk.YES)
 
-    tree.tag_configure("low_stock", foreground="#EF4444", font=("Segoe UI", 12, "bold"))
+    # --- ✨ תיקון צבע: הגדרת תגיות הצבע הירוקה למלאי תקין, והאדומה לחוסר/מתחת למינימום ---
+    tree.tag_configure("normal_stock", background="#E8F5E9", foreground="#155724")
+    tree.tag_configure("low_stock", background="#FFEBEE", foreground="#C62828", font=("Segoe UI", 12, "bold"))
 
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=v_scrollbar.set)
@@ -635,6 +663,7 @@ def setup_inventory_tab(tab):
 
     actions = ctk.CTkFrame(tab, fg_color="transparent")
     actions.pack(fill="x", pady=(10, 5))
+    
     ctk.CTkButton(actions, text="✏️ עדכון כמות מלאי בסניף", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_inventory(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ איפוס מלאי מוצר בסניף", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_inventory(tree)).pack(side="right", padx=25)
 
@@ -666,7 +695,13 @@ def refresh_inventory_data(tree, search_store="", search_prod=""):
         for row in cursor.fetchall():
             qty = row[4]
             min_stk = row[5]
-            row_tag = "low_stock" if qty < min_stk else ""
+            
+            # --- ✨ תיקון צביעה: פיצול חכם - מתחת למינימום באדום, כמות תקינה ושווה/מעל המינימום בירוק ---
+            if qty < min_stk:
+                row_tag = "low_stock"
+            else:
+                row_tag = "normal_stock"
+                
             tree.insert("", "end", values=(min_stk, qty, row[3], row[2], row[1], row[0]), tags=(row_tag,))
         cursor.close()
         conn.close()

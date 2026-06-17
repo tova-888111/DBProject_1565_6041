@@ -9,18 +9,18 @@ def show_suppliers_view(main_frame):
         widget.destroy()
 
     # --- כותרת עליונה ראשית - מודגשת ובולטת ---
-    header_label = ctk.CTkLabel(main_frame, text="ניהול ספקים ורכש רשתי", font=("Segoe UI", 30, "bold"), text_color="#111827", anchor="e")
+    header_label = ctk.CTkLabel(main_frame, text="ניהול ספקים ורכש רשתי", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
     header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    # --- כותרת משנה מתוקנת ללא סימנים הפוכים ובעיצוב בולט ויוקרתי ---
+    # --- ✨ תיקון: שינוי צבע הכותרת לצבע האחיד של שאר הלשוניות וניסוח מחדש של המלל ---
     sub_header = ctk.CTkLabel(
         main_frame, 
-        text="מערכת רכש מרכזית. ספקי הרשת מספקים סחורה באופן ישיר אל המחסנים הלוגיסטיים בלבד ומשם מבוצעת הפצה מבוקרת לסניפים", 
+        text="מערכת רכש מרכזית. ספקי הרשת מספקים סחורה באופן ישיר אל המחסנים השונים שמהם ניתן לבצע הזמנות והפצה לסניפים", 
         font=("Segoe UI", 14, "bold"), 
-        text_color="#047857", # ירוק-ברקת עמוק ובולט יותר
+        text_color="#4B5563", # צבע כחול-אפור התואם לשאר המסכים
         anchor="e"
     )
-    sub_header.pack(pady=(0, 25), padx=35, fill="x") # הגדלנו את המרווח התחתון ל-25
+    sub_header.pack(pady=(0, 25), padx=35, fill="x")
 
     # --- מערכת הטאבים המרכזית (Tabview) ---
     tabview = ctk.CTkTabview(main_frame, corner_radius=12, fg_color="#F3F4F6", segmented_button_fg_color="#E5E7EB",
@@ -45,7 +45,6 @@ def show_suppliers_view(main_frame):
 # 📑 טאב 1: ניהול ספקי הרשת (SUPPLIER)
 # =========================================================================
 def setup_suppliers_tab(tab):
-    # שורת מסנני חיפוש סימטרית ב-Grid
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 12))
     search_frame.grid_columnconfigure(0, weight=1)
@@ -62,17 +61,37 @@ def setup_suppliers_tab(tab):
     search_id_entry.bind("<KeyRelease>", lambda event: refresh_suppliers_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
     search_name_entry.bind("<KeyRelease>", lambda event: refresh_suppliers_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
 
-    # שורת פעולות
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(0, 10))
     ctk.CTkButton(btn_frame, text="➕ הוספת ספק חדש", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_supplier_modal(tree)).pack(side="right", padx=5)
 
-    # מיכל טבלה ב-Grid
     table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=12, border_color="#E5E7EB", border_width=1)
     table_container.pack(fill="both", expand=True, pady=5)
     table_container.grid_rowconfigure(0, weight=1)
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    
+    # --- ✨ תיקון צבע: עדכון כיתוב הטבלה לכחול הכהה והבולט המודגש המבוקש ---
+    style.configure("Custom.Treeview",
+                    background="#FFFFFF",
+                    foreground="#1E3A8A", # כחול כהה
+                    rowheight=40,
+                    fieldbackground="#FFFFFF",
+                    font=("Segoe UI", 12, "bold"), # כתב מודגש
+                    borderwidth=0,
+                    relief="flat")
+    
+    style.configure("Custom.Treeview.Heading",
+                    background="#F9FAFB",
+                    foreground="#4B5563",
+                    font=("Segoe UI", 13, "bold"),
+                    relief="flat",
+                    borderwidth=0)
+    
+    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
     columns = ("address", "phone", "email", "supplier_name", "supplier_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
@@ -94,11 +113,9 @@ def setup_suppliers_tab(tab):
     v_scrollbar.grid(row=0, column=0, sticky="ns", pady=10, padx=(10, 0))
     tree.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
-    # --- שדרוג: הרחבה וייצוב של שורת כפתורי הפעולה התחתונה ---
     actions = ctk.CTkFrame(tab, fg_color="transparent")
-    actions.pack(fill="x", pady=(15, 10)) # הוספת מרווח אנכי עשיר למניעת כיווץ
+    actions.pack(fill="x", pady=(15, 10))
 
-    # הרחבנו את ה-width של הכפתורים שיהיו בולטים ונוחים
     ctk.CTkButton(actions, text="✏️ עריכת פרטי ספק", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=160, height=38, corner_radius=10, command=lambda: edit_supplier(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ מחיקת ספק מהמערכת", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=180, height=38, corner_radius=10, command=lambda: delete_supplier(tree)).pack(side="right", padx=25)
 
@@ -240,7 +257,6 @@ def delete_supplier(tree):
 # 📑 טאב 2: קטלוג פריטים לפי ספקים (SUPPLIERED_BY CRUD מלא)
 # =========================================================================
 def setup_supplied_by_tab(tab):
-    # שורת מסנני חיפוש סימטרית ב-Grid
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 12))
     search_frame.grid_columnconfigure(0, weight=1)
@@ -257,12 +273,10 @@ def setup_supplied_by_tab(tab):
     search_wh_entry.bind("<KeyRelease>", lambda event: refresh_supplied_by_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
     search_prod_entry.bind("<KeyRelease>", lambda event: refresh_supplied_by_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
 
-    # שורת פעולות
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(0, 10))
     ctk.CTkButton(btn_frame, text="➕ שיוך מוצר חדש לספק", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_supplied_by_modal(tree)).pack(side="right", padx=5)
 
-    # מיכל טבלה ב-Grid
     table_container = ctk.CTkFrame(tab, fg_color="#FFFFFF", corner_radius=12, border_color="#E5E7EB", border_width=1)
     table_container.pack(fill="both", expand=True, pady=5)
     table_container.grid_rowconfigure(0, weight=1)
@@ -287,11 +301,9 @@ def setup_supplied_by_tab(tab):
     v_scrollbar.grid(row=0, column=0, sticky="ns", pady=10, padx=(10, 0))
     tree.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
-    # --- שדרוג: הרחבה וייצוב של שורת כפתורי הפעולה התחתונה של הקטלוג ---
     actions = ctk.CTkFrame(tab, fg_color="transparent")
-    actions.pack(fill="x", pady=(15, 10)) # מניעת כיווץ אנכי
+    actions.pack(fill="x", pady=(15, 10))
 
-    # הגדלת מימדי הכפתורים לרוחב סימטרי אחיד ומקצועי
     ctk.CTkButton(actions, text="✏️ עדכון שיוך ספק-מוצר", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=180, height=38, corner_radius=10, command=lambda: edit_supplied_by(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ ביטול הרשאת אספקה", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=180, height=38, corner_radius=10, command=lambda: delete_supplied_by(tree)).pack(side="right", padx=25)
 
@@ -365,7 +377,6 @@ def open_supplied_by_modal(tree, edit_data=None):
     p_option.pack(fill="x", padx=40, pady=4)
 
     if is_edit:
-        # במצב עריכה - נועלים את מפתחות הקשר הקבועים
         for s_str in suppliers_list:
             if s_str.startswith(str(edit_data[3]) + " -"): s_option.set(s_str)
         s_option.configure(state="disabled")
@@ -389,7 +400,6 @@ def open_supplied_by_modal(tree, edit_data=None):
             cursor = conn.cursor()
             try:
                 if is_edit:
-                    # עריכת טבלת קשר מורכבת משני מפתחות: מעדכנים את ה-ProductID עבור ה-SupplierID הקיים
                     cursor.execute("UPDATE SUPPLIERED_BY SET ProductID=%s WHERE SupplierID=%s AND ProductID=%s;", 
                                    (prod_id, sup_id, int(edit_data[1])))
                 else:
@@ -433,7 +443,7 @@ def delete_supplied_by(tree):
                     "חסימת ביטול הרשאה",
                     f"לא ניתן לבטל הרשאת אספקה זו כרגע.\n\n"
                     f"הסיבה: קיימות הזמנות פתוחות או תלויות רכש במחסנים הממתינות לאספקה מול פריט זה.\n"
-                    f"אנא ודאי שאין תלויות פעילות בדף ההזמנות."
+                    f"אנא ודאי שאין תלויות לוגיסטיות פעילות בדף ההזמנות."
                 )
             finally:
                 cursor.close()

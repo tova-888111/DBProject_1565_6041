@@ -31,8 +31,18 @@ def show_discounts_view(main_frame):
     tab_catalog = tabview.add("🏷️   ניהול מבצעים")
     tab_applies = tabview.add("🔗   החלת מבצעים על מוצרים")
 
-    setup_discount_catalog_tab(tab_catalog)
-    setup_applies_to_tab(tab_applies)
+    # שליפת רפרנסים לטבלאות לצורך סנכרון בזמן אמת במעבר בין הטאבים
+    catalog_tree = setup_discount_catalog_tab(tab_catalog)
+    applies_tree = setup_applies_to_tab(tab_applies)
+
+    # ✨ תיקון: פונקציית האזנה המרעננת את הצבעים והנתונים בדיוק ברגע המעבר בין הלשוניות
+    def on_tab_change():
+        if tabview.get() == "🏷️   ניהול מבצעים":
+            refresh_discounts_table(catalog_tree)
+        elif tabview.get() == "🔗   החלת מבצעים על מוצרים":
+            refresh_applies_table(applies_tree)
+            
+    tabview.configure(command=on_tab_change)
 
 
 # =====================================================================
@@ -93,6 +103,7 @@ def setup_discount_catalog_tab(tab):
     delete_btn.pack(side="right", padx=5)
 
     refresh_discounts_table(tree)
+    return tree
 
 
 def refresh_discounts_table(tree):
@@ -252,14 +263,12 @@ def delete_selected_discount(tree):
     if conn:
         cursor = conn.cursor()
         try:
-            # ניסיון מחיקה ישיר מהדאטהבייס כדי לאפשר מנגנון תלויות מבוקר
             cursor.execute("DELETE FROM DISCOUNT WHERE DiscountID = %s;", (int(d_id),))
             conn.commit()
             messagebox.showinfo("הצלחה", "המבצע נמחק לחלוטין מהמערכת.")
             refresh_discounts_table(tree)
         except Exception as e:
             error_msg = str(e)
-            # --- ✨ שדרוג מבוקש: חסימת מחיקה כאשר רשומות אחרות תלויות בהזמנה זו ---
             if "foreign key constraint" in error_msg or "is still referenced" in error_msg:
                 messagebox.showerror(
                     "חסימת מחיקה - מבצע משויך למוצרים", 
@@ -284,14 +293,27 @@ def setup_applies_to_tab(tab):
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 12))
 
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍  סינון לפי קוד מבצע", font=("Segoe UI", 13, "bold"), text_color="#374151")
-    search_lbl.pack(side="right", padx=(10, 0))
+    # === 🔍 שדות חיפוש סימטריים ומשולבים ===
     
-    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי קוד מבצע", font=("Segoe UI", 13), width=180, height=35, corner_radius=8, justify="right")
-    search_id_entry.pack(side="right")
-    search_id_entry.bind("<KeyRelease>", lambda event: refresh_applies_table(tree, search_id_entry.get().strip()))
+    # 1. מסנן לפי קוד מבצע
+    search_lbl = ctk.CTkLabel(search_frame, text="קוד מבצע", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(15, 5))
+    
+    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי קוד מבצע", font=("Segoe UI", 13), width=160, height=35, corner_radius=8, justify="right")
+    search_id_entry.pack(side="right", padx=(0, 15))
+    
+    # 2. מסנן לפי קוד מוצר (מיושר ומרווח בצורה זהה לחלוטין)
+    search_prod_lbl = ctk.CTkLabel(search_frame, text="קוד מוצר", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_prod_lbl.pack(side="right", padx=(15, 5))
+    
+    search_prod_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי קוד מוצר", font=("Segoe UI", 13), width=160, height=35, corner_radius=8, justify="right")
+    search_prod_entry.pack(side="right")
 
-    # החזרת כפתור הפעולה העליון לשורת כפתורי הפעולה הבאה (מתחת לחיפוש) בצד ימין
+    # קישור שני השדות לעדכון דינמי משולב
+    search_id_entry.bind("<KeyRelease>", lambda event: refresh_applies_table(tree, search_id_entry.get().strip(), search_prod_entry.get().strip()))
+    search_prod_entry.bind("<KeyRelease>", lambda event: refresh_applies_table(tree, search_id_entry.get().strip(), search_prod_entry.get().strip()))
+
+    # החזרת כפתור הפעולה העליון לשורת כפתורי הפעולה הבאה בצד ימין
     action_frame = ctk.CTkFrame(tab, fg_color="transparent")
     action_frame.pack(fill="x", pady=(0, 10))
 
@@ -321,8 +343,9 @@ def setup_applies_to_tab(tab):
     tree.column("discount_name", width=220, anchor="e", stretch=tk.YES)
     tree.column("discount_pct", width=110, anchor="center", stretch=tk.NO)
 
-    # --- ✨ הגדרות צבע מעודכנות: ירוק לפעיל, אדום בהיר ללא פעיל (פג תוקף/עתידי) ---
+    # --- ✨ תיקון צבעים: ירוק לפעיל, כתום מודגש לעתידי, אדום בהיר לפג תוקף ---
     tree.tag_configure("active_link", background="#E8F5E9", foreground="#047857", font=("Segoe UI", 12, "bold"))
+    tree.tag_configure("upcoming_link", background="#FFFBEB", foreground="#F59E0B", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("inactive_link", background="#FEF2F2", foreground="#991B1B", font=("Segoe UI", 12))
 
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
@@ -340,9 +363,10 @@ def setup_applies_to_tab(tab):
     delete_btn.pack(side="right", padx=5)
 
     refresh_applies_table(tree)
+    return tree
 
 
-def refresh_applies_table(tree, filter_discount_id=""):
+def refresh_applies_table(tree, filter_discount_id="", filter_product_id=""):
     for item in tree.get_children():
         tree.delete(item)
     conn = get_db_connection()
@@ -361,6 +385,11 @@ def refresh_applies_table(tree, filter_discount_id=""):
             if filter_discount_id and filter_discount_id.isdigit():
                 query += " AND a.DiscountID = %s"
                 params.append(int(filter_discount_id))
+
+            # ✨ תיקון: הוספת סינון שאילתה דינמי לפי קוד מוצר
+            if filter_product_id and filter_product_id.isdigit():
+                query += " AND a.ProductID = %s"
+                params.append(int(filter_product_id))
                 
             query += " ORDER BY a.ProductID ASC, a.DiscountID ASC;"
             cursor.execute(query, tuple(params))
@@ -370,11 +399,13 @@ def refresh_applies_table(tree, filter_discount_id=""):
                 start_date = row[6]
                 end_date = row[7]
                 
-                # --- ✨ תיקון צביעה מבוקש: אם המבצע בתוקף נצבע בירוק, אחרת (כל שאר המקרים) נצבע באדום עדין ---
-                if start_date <= today <= end_date:
-                    row_tag = "active_link"
-                else:
+                # --- ✨ תיקון חלוקת תגיות וצבעים: פעיל (ירוק), עתידי (כתום), פג תוקף (אדום) ---
+                if today > end_date:
                     row_tag = "inactive_link"
+                elif today < start_date:
+                    row_tag = "upcoming_link"
+                else:
+                    row_tag = "active_link"
                 
                 tree.insert("", "end", values=(f"{row[5]}%", row[4], row[2], row[1], row[3], row[0]), tags=(row_tag,))
         except Exception as e:

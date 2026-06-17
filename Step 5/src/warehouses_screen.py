@@ -8,12 +8,12 @@ def show_warehouses_view(main_frame):
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    # --- כותרת עליונה ראשית ---
-    header_label = ctk.CTkLabel(main_frame, text="מערך לוגיסטיקה ומחסני הרשת", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
-    header_label.pack(pady=(30, 2), padx=35, fill="x")
+    # --- כותרת עליונה מנופחת ומודגשת עם הדגש המבוקש לתפעול הרשת ---
+    header_label = ctk.CTkLabel(main_frame, text="מערך לוגיסטיקה ומחסני הרשת", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
+    header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="ניהול מרכזי של מחסני הפצה, צוותי ניהול, ואיתור מיקומי מוצרים על גבי המדפים", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
-    sub_header.pack(pady=(0, 15), padx=35, fill="x")
+    sub_header = ctk.CTkLabel(main_frame, text="ניהול מרכזי של מחסני הפצה, צוותי ניהול, ואיתור מיקומי מוצרים על גבי המדפים שמהם ניתן לקחת הזמנות לסניפים", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
+    sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
     # --- מערכת הטאבים המרכזית (Tabview) ---
     tabview = ctk.CTkTabview(main_frame, corner_radius=12, fg_color="#F3F4F6", segmented_button_fg_color="#E5E7EB",
@@ -22,9 +22,8 @@ def show_warehouses_view(main_frame):
                              text_color="#111827")
     tabview.pack(fill="both", expand=True, padx=35, pady=(0, 20))
 
-    # --- שדרוג: הגדלת כפתורי הטאבים למעלה שיהיו בולטים וגדולים משמעותית ---
     try:
-        tabview._segmented_button.configure(font=("Segoe UI", 15, "bold"), height=45)
+        tabview._segmented_button.configure(font=("Segoe UI", 14, "bold"), height=45)
     except:
         pass
 
@@ -40,31 +39,25 @@ def show_warehouses_view(main_frame):
 # 📑 טאב 1: מחסנים וצוות ניהול
 # =========================================================================
 def setup_combined_warehouses_tab(tab):
-    # --- שורת חיפוש עליונה מתוקנת ומסודרת מימין לשמאל ללא סימנים הפוכים ---
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 10))
     
-    # תווית ההסבר ממוקמת ראשונה מימין
     search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 15))
     
-    # תיבת קוד מחסן - שנייה מימין
     search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_id_entry.pack(side="right", padx=(0, 15))
     
-    # תיבת שם מנהל - שלישית מימין (משמאל לקוד)
     search_name_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי שם מנהל", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_name_entry.pack(side="right")
     
-    # הפעלת המסננים המשולבים בהקלדה
     search_id_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
     search_name_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
 
-    # שורת פעולות עליונה - הוספות
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(0, 10))
     
-    add_mgr_btn = ctk.CTkButton(btn_frame, text="👤 מינוי מנהל למחסן קיים", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: open_manager_add_modal(tree))
+    add_mgr_btn = ctk.CTkButton(btn_frame, text="👤 מינוי מנהל למחסן קיים", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_manager_add_modal(tree))
     add_mgr_btn.pack(side="left", padx=5)
     
     add_w_btn = ctk.CTkButton(btn_frame, text="🏢 הקמת מחסן חדש ברשת", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_warehouse_modal(tree))
@@ -75,6 +68,28 @@ def setup_combined_warehouses_tab(tab):
     table_container.grid_rowconfigure(0, weight=1)
     table_container.grid_columnconfigure(0, weight=0) 
     table_container.grid_columnconfigure(1, weight=1) 
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    
+    # ✨ עדכון פה: הגדרת הצבע לכחול כהה והוספת "bold" לכתב מודגש
+    style.configure("Custom.Treeview",
+                    background="#FFFFFF",
+                    foreground="#1E3A8A",
+                    rowheight=40,
+                    fieldbackground="#FFFFFF",
+                    font=("Segoe UI", 12, "bold"),
+                    borderwidth=0,
+                    relief="flat")
+    
+    style.configure("Custom.Treeview.Heading",
+                    background="#F9FAFB",
+                    foreground="#4B5563",
+                    font=("Segoe UI", 13, "bold"),
+                    relief="flat",
+                    borderwidth=0)
+    
+    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
     columns = ("manager", "address", "region", "warehouse_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
@@ -98,7 +113,7 @@ def setup_combined_warehouses_tab(tab):
     actions = ctk.CTkFrame(tab, fg_color="transparent")
     actions.pack(fill="x", pady=(10, 5))
     
-    ctk.CTkButton(actions, text="✏️ עריכת מיקום מחסן", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: edit_warehouse(tree)).pack(side="right", padx=5)
+    ctk.CTkButton(actions, text="✏️ עריכת מיקום מחסן", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_warehouse(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ סגירת מחסן מהרשת", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_warehouse(tree)).pack(side="right", padx=25)
     
     ctk.CTkButton(actions, text="🗑️ ביטול מינוי מנהל", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_manager(tree)).pack(side="left", padx=5)
@@ -182,13 +197,22 @@ def open_warehouse_modal(tree, edit_data=None):
             try:
                 if is_edit:
                     cursor.execute("UPDATE WAREHOUSE SET Region=%s, Address=%s WHERE WarehouseID=%s;", (reg, addr, int(w_id)))
+                    conn.commit()
+                    messagebox.showinfo("הצלחה", "פרטי המחסן עודכנו בהצלחה!")
+                    modal.destroy()
+                    refresh_combined_warehouses_data(tree)
                 else:
                     cursor.execute("INSERT INTO WAREHOUSE (WarehouseID, Region, Address) VALUES (%s, %s, %s);", (int(w_id), reg, addr))
-                conn.commit()
-                modal.destroy()
-                refresh_combined_warehouses_data(tree)
+                    conn.commit()
+                    messagebox.showinfo("הצלחה", "המחסן הלוגיסטי החדש הוקם בהצלחה!")
+                    modal.destroy()
+                    refresh_combined_warehouses_data(tree)
             except Exception as e:
-                messagebox.showerror("שגיאה", f"הפעולה נכשלה:\n{e}")
+                error_msg = str(e)
+                if "duplicate key" in error_msg or "already exists" in error_msg:
+                    messagebox.showerror("קוד מחסן תפוס", f"לא ניתן להקים את המחסן החדש.\n\nקוד מחסן מספר {w_id} כבר תפוס ורשום במערכת הרשת!\nאנא בחרי מספר מזהה ייחודי אחר.")
+                else:
+                    messagebox.showerror("שגיאה", f"הפעולה נכשלה:\n{error_msg}")
             finally:
                 cursor.close()
                 conn.close()
@@ -219,12 +243,12 @@ def delete_warehouse(tree):
                 error_msg = str(e)
                 if "foreign key constraint" in error_msg or "is still referenced" in error_msg:
                     messagebox.showerror(
-                        "לא ניתן למחוק - מחסן פעיל", 
-                        f"פעולת המחיקה עבור מחסן מספר {w_id} נחסמה באופן מאובטח.\n\n"
-                        f"💡 מדוע זה קרה?\n"
+                        "לא ניתן למחוק - מחסן פעיל ברשת", 
+                        f"פעולת המחיקה עבור מחסן מספר {w_id} נחסמה באופן מאובטח בדאטהבייס.\n\n"
+                        f"💡 הסיבה:\n"
                         f"קיימים כרגע במערכת נתונים התלויים ישירות במחסן זה (מוצרים שממוקמים במעברים שלו, או מנהל הרשום בו).\n\n"
                         f"🛠️ מה צריך לעשות עכשיו?\n"
-                        f"יש לפנות תחילה את כל המוצרים מהמלאי המשויכים למחסן זה (בלשונית איתור מוצרים) ולבטל את מינוי המנהל, ורק אז ניתן יהיה למחוק את המחסן."
+                        f"יש לפנות תחילה את כל המוצרים מהמלאי המשויכים למחסן זה (בלשונית איתור מוצרים) ולבטל את מינוי המנהל, ורק אז ניתן יהיה למחוק את המחסן מהמערכת."
                     )
                 else:
                     messagebox.showerror("שגיאה במחיקה", f"פעולת המחיקה נכשלה:\n{error_msg}")
@@ -287,7 +311,7 @@ def open_manager_add_modal(tree):
                 modal.destroy()
                 refresh_combined_warehouses_data(tree)
             except Exception as e:
-                messagebox.showerror("שגיאה", f"לא ניתן למנות מנהל זה (ייתכן והמחסן כבר מנוהל):\n{e}")
+                messagebox.showerror("שגיאה במינוי", f"לא ניתן למנות מנהל זה (ייתכן והמחסן כבר מנוהל על ידי גורם אחר):\n{e}")
             finally:
                 cursor.close()
                 conn.close()
@@ -353,7 +377,7 @@ def delete_manager(tree):
                 conn.commit()
                 refresh_combined_warehouses_data(tree)
             except Exception as e:
-                messagebox.showerror("حסימת מחיקה", f"לא ניתן לבצע את הפעולה עקב תלות במערכת:\n{e}")
+                messagebox.showerror("חסימת מחיקה", f"לא ניתן לבצע את הפעולה עקב תלות במערכת:\n{e}")
             finally:
                 cursor.close()
                 conn.close()
@@ -363,29 +387,24 @@ def delete_manager(tree):
 # 📦 טאב 2: איתור ומיקומי מוצרים במלאי
 # =========================================================================
 def setup_located_products_tab(tab):
-    # --- שורת חיפוש עליונה מפוצלת ומסודרת מימין לשמאל ללא סימנים הפוכים ---
     search_frame = ctk.CTkFrame(tab, fg_color="transparent")
     search_frame.pack(fill="x", pady=(5, 10))
     
-    # תווית ההסבר ממוקמת ראשונה מימין
     search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 15))
     
-    # תיבת קוד מחסן - שנייה מימין
     search_wh_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_wh_entry.pack(side="right", padx=(0, 15))
     
-    # תיבת קוד מוצר - שלישית מימין (משמאל למחסן)
     search_prod_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מוצר מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_prod_entry.pack(side="right")
     
-    # הפעלת הסינונים בהקלדה
     search_wh_entry.bind("<KeyRelease>", lambda event: refresh_located_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
     search_prod_entry.bind("<KeyRelease>", lambda event: refresh_located_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
 
-    # שורת פעולות
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(0, 10))
+    
     add_btn = ctk.CTkButton(btn_frame, text="➕ הצבת מוצר חדש במחסן", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_located_modal(tree))
     add_btn.pack(side="right", padx=5)
 
@@ -394,6 +413,28 @@ def setup_located_products_tab(tab):
     table_container.grid_rowconfigure(0, weight=1)
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
+
+    style = ttk.Style()
+    style.theme_use("clam")
+    
+    # ✨ עדכון פה: הגדרת הצבע לכחול כהה והוספת "bold" לכתב מודגש גם בטאב השני
+    style.configure("Custom.Treeview",
+                    background="#FFFFFF",
+                    foreground="#1E3A8A",
+                    rowheight=40,
+                    fieldbackground="#FFFFFF",
+                    font=("Segoe UI", 12, "bold"),
+                    borderwidth=0,
+                    relief="flat")
+    
+    style.configure("Custom.Treeview.Heading",
+                    background="#F9FAFB",
+                    foreground="#4B5563",
+                    font=("Segoe UI", 13, "bold"),
+                    relief="flat",
+                    borderwidth=0)
+    
+    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
     columns = ("shelf_nb", "aisle_nb", "warehouse_addr", "warehouse_id", "product_name", "product_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
@@ -420,6 +461,7 @@ def setup_located_products_tab(tab):
 
     actions = ctk.CTkFrame(tab, fg_color="transparent")
     actions.pack(fill="x", pady=(10, 5))
+    
     ctk.CTkButton(actions, text="🗑️ פינוי מהמלאי במחסן", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_located(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="✏️ עדכון מעבר/מדף", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_located(tree)).pack(side="right", padx=5)
 
@@ -538,10 +580,15 @@ def open_located_modal(tree, edit_data=None):
                 else:
                     cursor.execute("INSERT INTO LOCATED (ProductID, WarehouseID, AisleNb, ShelfNb) VALUES (%s, %s, %s, %s);", (p_id, w_id, aisle, shelf))
                 conn.commit()
+                messagebox.showinfo("הצלחה", "מיקום המוצר במחסן נשמר בהצלחה!")
                 modal.destroy()
                 refresh_located_data(tree)
             except Exception as e:
-                messagebox.showerror("שגיאה", f"ההצבה נכשלה. ייתכן והמוצר כבר משויך למחסן זה:\n{e}")
+                error_msg = str(e)
+                if "duplicate key" in error_msg or "already exists" in error_msg:
+                    messagebox.showerror("מוצר כבר מוצב במחסן", f"לא ניתן להוסיף את הרשומה.\n\nמוצר מספר {p_id} כבר משויך ומוצב בתוך מחסן מספר {w_id}!\nאנא השתמשי באפשרות עריכת מיקום למטה במידה וברצונך לשנות מעבר או מדף.")
+                else:
+                    messagebox.showerror("שגיאה", f"ההצבה נכשלה:\n{error_msg}")
             finally:
                 cursor.close()
                 conn.close()
@@ -571,12 +618,18 @@ def delete_located(tree):
                 conn.commit()
                 refresh_located_data(tree)
             except Exception as e:
-                messagebox.showerror(
-                    "חסימת פינוי מלאי", 
-                    f"לא ניתן לפנות את מוצר מספר {p_id} ממחסן {w_id}.\n\n"
-                    f"הסיבה: קיימות רשומות רשת התלויות במיקום מוצר זה (כגון הזמנות הפצה פתוחות או תלויות מלאי ספקים).\n"
-                    f"אנא ודאי שאין תלויות לוגיסטיות פעילות לפני הפינוי."
-                )
+                error_msg = str(e)
+                if "foreign key constraint" in error_msg or "is still referenced" in error_msg:
+                    messagebox.showerror(
+                        "חסימת פינוי מלאי - רשומה תלויה", 
+                        f"לא ניתן לפנות את מוצר מספר {p_id} ממחסן {w_id}.\n\n"
+                        f"💡 הסיבה:\n"
+                        f"קיימות רשומות רשת פתוחות התלויות במיקום מוצר זה (כגון הזמנות הפצה רשתיות פתוחות או תלויות מלאי ספקים).\n\n"
+                        f"🛠️ מה צריך לעשות?\n"
+                        f"אנא ודאי שאין תלויות לוגיסטיות פעילות או הזמנות משויכות בטאב 'ניהול הזמנות והפצה' לפני ביצוע הפינוי."
+                    )
+                else:
+                    messagebox.showerror("שגיאה", f"הביטול נכשל:\n{error_msg}")
             finally:
                 cursor.close()
                 conn.close()

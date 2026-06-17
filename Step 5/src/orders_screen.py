@@ -9,11 +9,11 @@ def show_orders_view(main_frame):
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    # --- כותרת עליונה ראשית ---
-    header_label = ctk.CTkLabel(main_frame, text="מערך הזמנות, לוגיסטיקה והפצה", font=("Segoe UI", 28, "bold"), text_color="#111827", anchor="e")
+    # --- ✨ תיקון: שינוי הכותרות שיהיו זהות לחלוטין לקבצים הקודמים ---
+    header_label = ctk.CTkLabel(main_frame, text="ניהול מבצעים והנחות רשתיים", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
     header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="ניהול הזמנות סניפים, מעקב סטטוסי משלוח, פיקוח על צי רכבי ההפצה וחברות המשלוחים", font=("Segoe UI", 14), text_color="#6B7280", anchor="e")
+    sub_header = ctk.CTkLabel(main_frame, text="הגדרה וניהול של אחוזי הנחה, תאריכי תוקף והחלת מבצעים על מוצרי הרשת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
     sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
     # --- מערכת הטאבים המרכזית (Tabview) ---
@@ -458,7 +458,8 @@ def setup_trucks_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
-    columns = ("company_name", "status", "plate", "is_active", "capacity", "driver_id", "hidden_cie_id", "hidden_active_num")
+    # --- ✨ תיקון: הוספת עמודת קוד חברה (hidden_cie_id) כעמודה גלויה בטבלה ---
+    columns = ("company_name", "hidden_cie_id", "status", "plate", "is_active", "capacity", "driver_id", "hidden_active_num")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
     
     tree.heading("driver_id", text="קוד נהג/רכב")
@@ -466,6 +467,7 @@ def setup_trucks_tab(tab):
     tree.heading("is_active", text="סטטוס פעילות")      
     tree.heading("plate", text="לוחית זיהוי")
     tree.heading("status", text="מצב תחזוקה")
+    tree.heading("hidden_cie_id", text="קוד חברה")
     tree.heading("company_name", text="חברת הפצה משוייכת")
 
     tree.column("driver_id", width=110, anchor="center", stretch=tk.YES)
@@ -473,8 +475,8 @@ def setup_trucks_tab(tab):
     tree.column("is_active", width=130, anchor="center", stretch=tk.YES)
     tree.column("plate", width=140, anchor="center", stretch=tk.YES)
     tree.column("status", width=130, anchor="center", stretch=tk.YES)
+    tree.column("hidden_cie_id", width=100, anchor="center", stretch=tk.YES)
     tree.column("company_name", width=220, anchor="e", stretch=tk.YES)
-    tree.column("hidden_cie_id", width=0, stretch=tk.NO)
     tree.column("hidden_active_num", width=0, stretch=tk.NO)
 
     tree.tag_configure("active_truck", background="#E8F5E9", foreground="#155724")
@@ -509,7 +511,8 @@ def refresh_trucks_data(tree):
             is_act_num = row[5]
             act_text = "פעיל" if is_act_num == 1 else "מושתת / לא פעיל"
             row_tag = "active_truck" if is_act_num == 1 else "inactive_truck"
-            tree.insert("", "end", values=(row[4], row[3], row[2], act_text, f"{row[1]:.2f}", row[0], row[6], is_act_num), tags=(row_tag,))
+            # גלגול הערכים לפי הסדר החדש של העמודות, כולל הצבת מזהה חברת ההפצה בעמודה הגלויה
+            tree.insert("", "end", values=(row[4], row[6], row[3], row[2], act_text, f"{row[1]:.2f}", row[0], is_act_num), tags=(row_tag,))
         cursor.close()
         conn.close()
 
@@ -538,23 +541,23 @@ def open_truck_modal(tree, edit_data=None):
     id_entry = ctk.CTkEntry(modal, justify="right")
     id_entry.pack(fill="x", padx=40, pady=2)
     if is_edit:
-        id_entry.insert(0, edit_data[5])
+        id_entry.insert(0, edit_data[6])
         id_entry.configure(state="disabled", fg_color="#E5E7EB")
 
     ctk.CTkLabel(modal, text="כושר נשיאה (בטונות)", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     cap_entry = ctk.CTkEntry(modal, justify="right")
     cap_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit: cap_entry.insert(0, edit_data[4])
+    if is_edit: cap_entry.insert(0, edit_data[5])
 
     ctk.CTkLabel(modal, text="מספר לוחית זיהוי", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     plate_entry = ctk.CTkEntry(modal, justify="right")
     plate_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit: plate_entry.insert(0, edit_data[2])
+    if is_edit: plate_entry.insert(0, edit_data[3])
 
     ctk.CTkLabel(modal, text="מצב תחזוקה נוכחי", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     status_entry = ctk.CTkEntry(modal, justify="right")
     status_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit: status_entry.insert(0, edit_data[1])
+    if is_edit: status_entry.insert(0, edit_data[2])
     else: status_entry.insert(0, "Good")
 
     ctk.CTkLabel(modal, text="חברת הפצה אחראית", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
@@ -562,7 +565,7 @@ def open_truck_modal(tree, edit_data=None):
     cie_option.pack(fill="x", padx=40, pady=2)
     if is_edit:
         for c_str in companies_list:
-            if c_str.startswith(str(edit_data[6]) + " -"): cie_option.set(c_str)
+            if c_str.startswith(str(edit_data[1]) + " -"): cie_option.set(c_str)
 
     ctk.CTkLabel(modal, text="סטטוס פעילות במערכת", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     active_option = ctk.CTkOptionMenu(modal, values=["1 - פעיל", "0 - לא פעיל"])
@@ -628,7 +631,7 @@ def edit_truck(tree):
 def delete_truck(tree):
     sel = tree.selection()
     if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי רכב להשבתה.")
-    d_id = tree.item(sel[0], 'values')[5]
+    d_id = tree.item(sel[0], 'values')[6]
     if messagebox.askyesno("אישור פעולה", f"האם את בטוחה שברצונך למחוק ולהשבית רכב מספר {d_id} מצי ההפצה?"):
         conn = get_db_connection()
         if conn:
@@ -672,6 +675,28 @@ def setup_companies_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
+    # === ✨ תוספת עבור כיתוב כחול כהה ומודגש בטבלת חברות ההפצה ===
+    style = ttk.Style()
+    style.theme_use("clam")
+    style.configure("Custom.Treeview",
+                    background="#FFFFFF",
+                    foreground="#1E3A8A",  # צבע כחול כהה בולט
+                    rowheight=40,
+                    fieldbackground="#FFFFFF",
+                    font=("Segoe UI", 12, "bold"),  # כתב עבה ומודגש
+                    borderwidth=0,
+                    relief="flat")
+    
+    style.configure("Custom.Treeview.Heading",
+                    background="#F9FAFB",
+                    foreground="#4B5563",
+                    font=("Segoe UI", 13, "bold"),
+                    relief="flat",
+                    borderwidth=0)
+    
+    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
+    # ==========================================================
+    
     columns = ("regions", "email", "phone", "cie_name", "cie_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
     
@@ -684,8 +709,10 @@ def setup_companies_tab(tab):
     tree.column("cie_id", width=100, anchor="center", stretch=tk.NO)
     tree.column("cie_name", width=180, anchor="e", stretch=tk.NO)
     tree.column("phone", width=130, anchor="center", stretch=tk.NO)
-    tree.column("email", width=180, anchor="center", stretch=tk.NO)
-    tree.column("regions", width=580, anchor="e", stretch=tk.YES) 
+    # --- ✨ תיקון: הגדלת שטח הרוחב לעמודת כתובת מייל מ-180 ל-260 ---
+    tree.column("email", width=260, anchor="center", stretch=tk.NO)
+    # --- ✨ תיקון: רישום תוכן עמודת אזורי שירות משמאל לימין באמצעות שינוי ה-anchor ל-"w" ---
+    tree.column("regions", width=500, anchor="w", stretch=tk.YES) 
 
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview) 
@@ -1014,7 +1041,6 @@ def open_calculate_price_modal(tree):
         except ValueError:
             return messagebox.showerror("קלט שגוי", "האחוז חייב להיות ערך מספרי.")
             
-        # --- ✨ שדרוג מבוקש: הגנת בדיקת קלט מקומית - אחוז חייב להיות בין 1 ל-100 ---
         if percent_val < 1.0 or percent_val > 100.0:
             return messagebox.showwarning("ערך מחוץ לטווח", "אחוז עלות סיטונאית חייב להיות מספר בין 1 ל-100 בלבד.")
             
@@ -1022,7 +1048,6 @@ def open_calculate_price_modal(tree):
         if conn:
             cursor = conn.cursor()
             try:
-                # בדיקה מקדימה אם ההזמנה ריקה ממוצרים
                 cursor.execute("SELECT COUNT(*) FROM CONTAINS WHERE OrderId = %s;", (int(o_id),))
                 items_in_order = cursor.fetchone()[0]
                 
@@ -1034,7 +1059,6 @@ def open_calculate_price_modal(tree):
                     refresh_orders_data(tree)
                     return
                 
-                # אם ההזמנה מכילה פריטים, מריצים את פונקציית השרת המקורית כרגיל
                 cursor.execute("SELECT calculate_order_price(%s, %s);", (int(o_id), percent_val))
                 new_price = cursor.fetchone()[0]
                 conn.commit()
@@ -1071,15 +1095,12 @@ def trigger_complete_order_procedure(tree):
     if conn:
         cursor = conn.cursor()
         try:
-            # שליפת כמות הפריטים השונים שיש בתוך ההזמנה (מטבלת הקשר CONTAINS) לפני סגירתה
             cursor.execute("SELECT COUNT(*) FROM CONTAINS WHERE OrderId = %s;", (int(o_id),))
             items_count = cursor.fetchone()[0]
             
-            # קריאה והרצה של הפרוצדורה complete_order_and_update_stock השמורה ב-PostgreSQL
             cursor.execute("CALL complete_order_and_update_stock(%s);", (int(o_id),))
             conn.commit()
             
-            # הצגת הודעה מפורטת האומרת בדיוק כמה מוצרים שונים עודכנו במלאי בעקבות הריצה
             messagebox.showinfo("קליטה הצליחה", 
                                 f"🎉 הפרוצדורה בוצעה בהצלחה!\n\n"
                                 f"📊 סיכום פעולת קליטת המלאי:\n"

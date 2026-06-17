@@ -15,30 +15,29 @@ def show_employees_view(main_frame):
     sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ופיטורין של צוות העובדים בכלל סניפי הרשת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
     sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
-    # --- שורת חיפוש עליונה משולבת (לפי שם סניף וקוד סניף) ---
+    # --- שורת חיפוש עליונה משולבת (לפי מספר זהות וקוד סניף) ---
     search_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     search_frame.pack(padx=35, fill="x", pady=(0, 15))
     
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש:", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 0))
     
-    # 1. שדה חיפוש לפי שם סניף
-    search_name_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי שם סניף (למשל: ירושלים)", font=("Segoe UI", 13), width=240, height=35, corner_radius=8, justify="right")
-    search_name_entry.pack(side="right", padx=5)
+    # 1. ✨ תיקון: שדה חיפוש לפי מספר זהות עובד
+    search_emp_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי מספר זהות עובד", font=("Segoe UI", 13), width=240, height=35, corner_radius=8, justify="right")
+    search_emp_entry.pack(side="right", padx=5)
     
-    # 2. שדה חיפוש לפי קוד סניף (ID)
-    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי קוד סניף (מספר)", font=("Segoe UI", 13), width=160, height=35, corner_radius=8, justify="right")
-    search_id_entry.pack(side="right", padx=5)
+    # 2. ✨ תיקון: שדה חיפוש לפי קוד סניף
+    search_store_id_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי קוד סניף (מספר)", font=("Segoe UI", 13), width=160, height=35, corner_radius=8, justify="right")
+    search_store_id_entry.pack(side="right", padx=5)
     
     # קישור אירועי הקלדה לעדכון דינמי משולב של שני השדות יחד בזמן אמת
-    search_name_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_name_entry.get().strip(), search_id_entry.get().strip()))
-    search_id_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_name_entry.get().strip(), search_id_entry.get().strip()))
+    search_emp_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_emp_entry.get().strip(), search_store_id_entry.get().strip()))
+    search_store_id_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_emp_entry.get().strip(), search_store_id_entry.get().strip()))
 
-    # --- ✨ החזרה למקום המקורי: שורת כפתורי פעולה מתחת לחיפוש ---
+    # --- שורת כפתורי פעולה מתחת לחיפוש ---
     action_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     action_frame.pack(padx=35, fill="x", pady=(0, 15))
 
-    # כפתור הוספת עובד חזר למיקומו המקורי בצד ימין (כפתור הרענון הוסר בהצלחה)
     add_btn = ctk.CTkButton(action_frame, text="➕  הוספת עובד חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=160, height=40, corner_radius=10, command=lambda: open_employee_modal(tree))
     add_btn.pack(side="right", padx=5)
 
@@ -71,7 +70,6 @@ def show_employees_view(main_frame):
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    # שמירה על סדר העמודות כולל העמודות הגלויות
     columns = ("store_name", "store_id", "role", "salary", "status", "last_name", "first_name", "emp_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
@@ -84,7 +82,6 @@ def show_employees_view(main_frame):
     tree.heading("store_id", text="קוד סניף", anchor="center")
     tree.heading("store_name", text="משויך לסניף", anchor="center")
 
-    # קביעת מימדים ומתיחה סימטרית לעמודות
     tree.column("emp_id", width=100, anchor="center", stretch=tk.NO)
     tree.column("first_name", width=120, anchor="center", stretch=tk.YES)
     tree.column("last_name", width=120, anchor="center", stretch=tk.YES)
@@ -103,7 +100,6 @@ def show_employees_view(main_frame):
     v_scrollbar.grid(row=0, column=0, sticky="ns", pady=15, padx=(15, 0))
     tree.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
 
-    # שורת כפתורי CRUD תחתונים
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
     bottom_actions.pack(padx=35, fill="x", pady=(0, 30))
 
@@ -116,7 +112,7 @@ def show_employees_view(main_frame):
     refresh_table(tree)
 
 
-def refresh_table(tree, name_query="", id_query=""):
+def refresh_table(tree, emp_id_query="", store_id_query=""):
     for item in tree.get_children():
         tree.delete(item)
 
@@ -124,6 +120,7 @@ def refresh_table(tree, name_query="", id_query=""):
     if conn:
         cursor = conn.cursor()
         try:
+            # ✨ תיקון: התאמת השאילתה לסינון המבוקש לפי תעודת זהות וקוד סניף
             query = """
                 SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
                 FROM EMPLOYEE e
@@ -132,13 +129,13 @@ def refresh_table(tree, name_query="", id_query=""):
             """
             params = []
             
-            if name_query:
-                query += " AND s.StoreName ILIKE %s"
-                params.append(f"%{name_query}%")
+            if emp_id_query and emp_id_query.isdigit():
+                query += " AND e.EmployeeID = %s"
+                params.append(int(emp_id_query))
                 
-            if id_query and id_query.isdigit():
+            if store_id_query and store_id_query.isdigit():
                 query += " AND e.StoreID = %s"
-                params.append(int(id_query))
+                params.append(int(store_id_query))
                 
             query += " ORDER BY e.EmployeeID ASC;"
             cursor.execute(query, tuple(params))
@@ -161,21 +158,22 @@ def refresh_table(tree, name_query="", id_query=""):
             conn.close()
 
 
-def get_all_store_ids():
-    store_ids = []
+def get_all_store_ids_with_names():
+    """✨ תיקון: שליפת קוד סניף משולב יחד עם שם הסניף עבור המפתח הזר"""
+    store_labels = []
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
         try:
-            cursor.execute("SELECT StoreID FROM STORE ORDER BY StoreID ASC;")
-            for (s_id,) in cursor.fetchall():
-                store_ids.append(str(s_id))
+            cursor.execute("SELECT StoreID, StoreName FROM STORE ORDER BY StoreID ASC;")
+            for s_id, s_name in cursor.fetchall():
+                store_labels.append(f"{s_id} - {s_name}")
         except Exception as e:
-            print(f"Error fetching store IDs: {e}")
+            print(f"Error fetching store IDs and names: {e}")
         finally:
             cursor.close()
             conn.close()
-    return store_ids
+    return store_labels
 
 
 def open_employee_modal(tree, employee_data=None):
@@ -206,9 +204,10 @@ def open_employee_modal(tree, employee_data=None):
 
     ctk.CTkLabel(scrollable_frame, text=title_text, font=("Segoe UI", 20, "bold"), text_color="#111827").pack(pady=(25, 20))
 
-    available_store_ids = get_all_store_ids()
-    if not available_store_ids:
-        available_store_ids = ["אין סניפים"]
+    # שימוש ברשימה המורחבת של קוד + שם סניף
+    available_stores = get_all_store_ids_with_names()
+    if not available_stores:
+        available_stores = ["אין סניפים"]
 
     status_options = ["Active", "Inactive"]
 
@@ -219,7 +218,7 @@ def open_employee_modal(tree, employee_data=None):
         {"label": "תפקיד עובד", "key": "role", "type": "entry"},
         {"label": "שכר חודשי בשקלים", "key": "salary", "type": "entry"},
         {"label": "סטטוס עבודה ברשת", "key": "status", "type": "option", "options": status_options},
-        {"label": "קוד סניף משויך (ID המפתח הזר)", "key": "store_id", "type": "option", "options": available_store_ids}
+        {"label": "בחירת סניף (קוד ושם סניף)", "key": "store_id", "type": "option", "options": available_stores}
     ]
     
     widgets_dict = {}
@@ -251,7 +250,15 @@ def open_employee_modal(tree, employee_data=None):
             
             if is_edit:
                 val = str(employee_data[cfg["key"]])
-                widget.set(val) if val in cfg["options"] else widget.set(cfg["options"][0])
+                # התאמה למצב עריכה: מציאת השורה שמתחילה באותו ID סניף
+                found = False
+                for item in cfg["options"]:
+                    if item.startswith(val + " -"):
+                        widget.set(item)
+                        found = True
+                        break
+                if not found:
+                    widget.set(cfg["options"][0])
             else:
                 widget.set(cfg["options"][0])
                 
@@ -271,17 +278,18 @@ def save_employee(modal, widgets, tree, is_edit):
     role = widgets["role"].get().strip()
     salary = widgets["salary"].get().strip()
     status = widgets["status"].get()
-    store_id_str = widgets["store_id"].get()
+    store_selection = widgets["store_id"].get()
 
     if not emp_id or not first_name or not last_name or not role or not salary:
         messagebox.showwarning("שדות חסרים", "אנא מלאי את כל שדות החובה של העובד.")
         return
 
-    if store_id_str == "אין סניפים" or not store_id_str.isdigit():
+    if store_selection == "אין סניפים" or " - " not in store_selection:
         messagebox.showerror("שגיאת מפתח זר", "לא ניתן להוסיף עובד ללא בחירת קוד סניף תקין וקיים במערכת!")
         return
 
-    store_id = int(store_id_str)
+    # חילוץ קוד הסניף (ID המספרי בלבד) מתוך השורה הנבחרת
+    store_id = int(store_selection.split(" - ")[0])
 
     try:
         salary_val = float(salary.replace("₪", "").replace(",", "").strip())

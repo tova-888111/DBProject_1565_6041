@@ -22,7 +22,7 @@ def show_stores_view(main_frame):
     search_lbl = ctk.CTkLabel(search_frame, text="🔍   חיפוש סניף לפי שם", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 0))
     
-    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף לחיפוש...", font=("Segoe UI", 13), width=280, height=35, corner_radius=8, justify="right")
+    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף לחיפוש", font=("Segoe UI", 13), width=280, height=35, corner_radius=8, justify="right")
     search_entry.pack(side="right")
     
     # הפעלת חיפוש בזמן אמת בעת הקלדה
