@@ -195,7 +195,7 @@ def open_order_modal(tree, edit_data=None):
             if t_str.startswith(str(edit_data[1]) + " -"): truck_option.set(t_str)
 
     ctk.CTkLabel(modal, text="סטטוס הפצה נוכחי", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
-    status_option = ctk.CTkOptionMenu(modal, values=["PENDING", "IN TRANSIT", "DELIVERED", "CANCELLED"])
+    status_option = ctk.CTkOptionMenu(modal, values=["PENDING", "COMPLETED"])
     status_option.pack(fill="x", padx=40, pady=2)
     if is_edit: status_option.set(edit_data[0])
 
