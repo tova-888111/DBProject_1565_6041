@@ -12,7 +12,7 @@ def show_suppliers_view(main_frame):
     header_label = ctk.CTkLabel(main_frame, text="ניהול ספקים ורכש רשתי", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
     header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    # --- ✨ תיקון: שינוי צבע הכותרת לצבע האחיד של שאר הלשוניות וניסוח מחדש של המלל ---
+    # --- שינוי צבע הכותרת לצבע האחיד של שאר הלשוניות וניסוח מחדש של המלל ---
     sub_header = ctk.CTkLabel(
         main_frame, 
         text="מערכת רכש מרכזית. ספקי הרשת מספקים סחורה באופן ישיר אל המחסנים השונים שמהם ניתן לבצע הזמנות והפצה לסניפים", 
@@ -71,11 +71,11 @@ def setup_suppliers_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
+    # ✨ בידוד סטייל: שינוי שם הסטייל ל-Sup.Treeview למניעת התנגשויות עמודים
     style = ttk.Style()
     style.theme_use("clam")
     
-    # --- ✨ תיקון צבע: עדכון כיתוב הטבלה לכחול הכהה והבולט המודגש המבוקש ---
-    style.configure("Custom.Treeview",
+    style.configure("Sup.Treeview",
                     background="#FFFFFF",
                     foreground="#1E3A8A", # כחול כהה
                     rowheight=40,
@@ -84,17 +84,17 @@ def setup_suppliers_tab(tab):
                     borderwidth=0,
                     relief="flat")
     
-    style.configure("Custom.Treeview.Heading",
+    style.configure("Sup.Treeview.Heading",
                     background="#F9FAFB",
                     foreground="#4B5563",
                     font=("Segoe UI", 13, "bold"),
                     relief="flat",
                     borderwidth=0)
     
-    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
+    style.map("Sup.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
     columns = ("address", "phone", "email", "supplier_name", "supplier_id")
-    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
+    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Sup.Treeview")
     
     tree.heading("supplier_id", text="קוד ספק", anchor="center")
     tree.heading("supplier_name", text="שם חברת הספק", anchor="center")
@@ -284,7 +284,8 @@ def setup_supplied_by_tab(tab):
     table_container.grid_columnconfigure(1, weight=1)
 
     columns = ("product_name", "product_id", "supplier_name", "supplier_id")
-    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
+    # ✨ הצמדת הסטייל המבודד Sup.Treeview גם לטבלה השנייה של הקטלוג
+    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Sup.Treeview")
     
     tree.heading("supplier_id", text="קוד ספק", anchor="center")
     tree.heading("supplier_name", text="שם חברת הספק", anchor="center")
@@ -305,7 +306,7 @@ def setup_supplied_by_tab(tab):
     actions.pack(fill="x", pady=(15, 10))
 
     ctk.CTkButton(actions, text="✏️ עדכון שיוך ספק-מוצר", font=("Segoe UI", 13, "bold"), fg_color="#3B82F6", hover_color="#2563EB", width=180, height=38, corner_radius=10, command=lambda: edit_supplied_by(tree)).pack(side="right", padx=5)
-    ctk.CTkButton(actions, text="🗑️ ביטול הרשאת אספקה", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=180, height=38, corner_radius=10, command=lambda: delete_supplied_by(tree)).pack(side="right", padx=25)
+    ctk.CTkButton(actions, text="🗑️  ביטול הרשאת אספקה", font=("Segoe UI", 13, "bold"), fg_color="#EF4444", hover_color="#DC2626", width=180, height=38, corner_radius=10, command=lambda: delete_supplied_by(tree)).pack(side="right", padx=25)
 
     refresh_supplied_by_data(tree)
 

@@ -22,15 +22,12 @@ def show_employees_view(main_frame):
     search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 0))
     
-    # 1. ✨ תיקון: שדה חיפוש לפי מספר זהות עובד
     search_emp_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי מספר זהות עובד", font=("Segoe UI", 13), width=240, height=35, corner_radius=8, justify="right")
     search_emp_entry.pack(side="right", padx=5)
     
-    # 2. ✨ תיקון: שדה חיפוש לפי קוד סניף
     search_store_id_entry = ctk.CTkEntry(search_frame, placeholder_text="לפי קוד סניף (מספר)", font=("Segoe UI", 13), width=160, height=35, corner_radius=8, justify="right")
     search_store_id_entry.pack(side="right", padx=5)
     
-    # קישור אירועי הקלדה לעדכון דינמי משולב של שני השדות יחד בזמן אמת
     search_emp_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_emp_entry.get().strip(), search_store_id_entry.get().strip()))
     search_store_id_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_emp_entry.get().strip(), search_store_id_entry.get().strip()))
 
@@ -45,7 +42,9 @@ def show_employees_view(main_frame):
     table_container = ctk.CTkFrame(main_frame, fg_color="#FFFFFF", corner_radius=18, border_color="#E5E7EB", border_width=1)
     table_container.pack(fill="both", expand=True, padx=35, pady=(0, 20))
 
+    # שינוי הגדרות ה-Grid כדי לפנות שורה תחתונה לסרגל הגלילה האופקי
     table_container.grid_rowconfigure(0, weight=1)
+    table_container.grid_rowconfigure(1, weight=0) # עבור ה-h_scrollbar
     table_container.grid_columnconfigure(0, weight=0) 
     table_container.grid_columnconfigure(1, weight=1) 
 
@@ -87,18 +86,23 @@ def show_employees_view(main_frame):
     tree.column("last_name", width=120, anchor="center", stretch=tk.YES)
     tree.column("status", width=110, anchor="center", stretch=tk.NO)
     tree.column("salary", width=110, anchor="center", stretch=tk.NO)
-    tree.column("role", width=200, anchor="center", stretch=tk.YES) 
+    # ✨ תיקון: הגדלה משמעותית של עמודת התפקיד מ-200 ל-350 פיקסלים
+    tree.column("role", width=350, anchor="center", stretch=tk.YES) 
     tree.column("store_id", width=90, anchor="center", stretch=tk.NO)       
     tree.column("store_name", width=280, anchor="e", stretch=tk.YES)      
 
     tree.tag_configure("active_status", foreground="#10B981", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("inactive_status", foreground="#EF4444", font=("Segoe UI", 12, "bold"))
 
+    # סרגלי גלילה אנכי ואופקי
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
-    tree.configure(yscrollcommand=v_scrollbar.set)
+    h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview)
+    tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
     
-    v_scrollbar.grid(row=0, column=0, sticky="ns", pady=15, padx=(15, 0))
-    tree.grid(row=0, column=1, sticky="nsew", padx=15, pady=15)
+    # ✨ תיקון: מיקום סרגלי הגלילה כולל הוספת הגלילה האופקית החדשה בתחתית
+    v_scrollbar.grid(row=0, column=0, sticky="ns", pady=(15, 2), padx=(15, 0))
+    h_scrollbar.grid(row=1, column=1, sticky="ew", padx=(0, 15), pady=(0, 15))
+    tree.grid(row=0, column=1, sticky="nsew", padx=(0, 15), pady=(15, 2))
 
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
     bottom_actions.pack(padx=35, fill="x", pady=(0, 30))
@@ -120,7 +124,6 @@ def refresh_table(tree, emp_id_query="", store_id_query=""):
     if conn:
         cursor = conn.cursor()
         try:
-            # ✨ תיקון: התאמת השאילתה לסינון המבוקש לפי תעודת זהות וקוד סניף
             query = """
                 SELECT e.EmployeeID, e.FirstName, e.LastName, e.Status, e.Salary, e.Role, e.StoreID, s.StoreName
                 FROM EMPLOYEE e
@@ -159,7 +162,6 @@ def refresh_table(tree, emp_id_query="", store_id_query=""):
 
 
 def get_all_store_ids_with_names():
-    """✨ תיקון: שליפת קוד סניף משולב יחד עם שם הסניף עבור המפתח הזר"""
     store_labels = []
     conn = get_db_connection()
     if conn:
@@ -204,7 +206,6 @@ def open_employee_modal(tree, employee_data=None):
 
     ctk.CTkLabel(scrollable_frame, text=title_text, font=("Segoe UI", 20, "bold"), text_color="#111827").pack(pady=(25, 20))
 
-    # שימוש ברשימה המורחבת של קוד + שם סניף
     available_stores = get_all_store_ids_with_names()
     if not available_stores:
         available_stores = ["אין סניפים"]
@@ -250,7 +251,6 @@ def open_employee_modal(tree, employee_data=None):
             
             if is_edit:
                 val = str(employee_data[cfg["key"]])
-                # התאמה למצב עריכה: מציאת השורה שמתחילה באותו ID סניף
                 found = False
                 for item in cfg["options"]:
                     if item.startswith(val + " -"):
@@ -288,7 +288,6 @@ def save_employee(modal, widgets, tree, is_edit):
         messagebox.showerror("שגיאת מפתח זר", "לא ניתן להוסיף עובד ללא בחירת קוד סניף תקין וקיים במערכת!")
         return
 
-    # חילוץ קוד הסניף (ID המספרי בלבד) מתוך השורה הנבחרת
     store_id = int(store_selection.split(" - ")[0])
 
     try:
