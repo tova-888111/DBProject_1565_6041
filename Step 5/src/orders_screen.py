@@ -9,7 +9,7 @@ def show_orders_view(main_frame):
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    # --- ✨ תיקון: שינוי הכותרות שיהיו זהות לחלוטין לקבצים הקודמים ---
+    # --- הכותרות הראשיות ---
     header_label = ctk.CTkLabel(main_frame, text=" ניהול הזמנות והפצה", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
     header_label.pack(pady=(35, 4), padx=35, fill="x")
     
@@ -69,22 +69,21 @@ def setup_orders_tab(tab):
     table_container.grid_columnconfigure(0, weight=0) 
     table_container.grid_columnconfigure(1, weight=1) 
 
-    columns = ("status", "driver_id", "store_info", "deliv_date", "order_date", "price", "order_id", "hidden_store_id")
+    # ✨ תיקון 1: הסרת רכיב ה-deliv_date מרשימת העמודות הראשיות של הטבלה
+    columns = ("status", "driver_id", "store_info", "order_date", "price", "order_id", "hidden_store_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
     
     tree.heading("order_id", text="קוד הזמנה", anchor="center")
     tree.heading("price", text="עלות כוללת", anchor="center")
     tree.heading("order_date", text="תאריך יצירת הזמנה", anchor="center")
-    tree.heading("deliv_date", text="תאריך שליחת הזמנה", anchor="center")
     tree.heading("store_info", text="סניף יעד מבוקש", anchor="center")
     tree.heading("driver_id", text="קוד נהג / משאית", anchor="center")
     tree.heading("status", text="סטטוס הפצה", anchor="center")
 
     tree.column("order_id", width=110, anchor="center", stretch=tk.NO)
     tree.column("price", width=130, anchor="center", stretch=tk.NO)
-    tree.column("order_date", width=160, anchor="center", stretch=tk.NO) 
-    tree.column("deliv_date", width=180, anchor="center", stretch=tk.NO) 
-    tree.column("store_info", width=340, anchor="e", stretch=tk.YES)  
+    tree.column("order_date", width=180, anchor="center", stretch=tk.NO) 
+    tree.column("store_info", width=360, anchor="e", stretch=tk.YES)  
     tree.column("driver_id", width=180, anchor="center", stretch=tk.NO) 
     tree.column("status", width=150, anchor="center", stretch=tk.NO)
     tree.column("hidden_store_id", width=0, stretch=tk.NO)
@@ -117,8 +116,9 @@ def refresh_orders_data(tree, search_id="", search_store=""):
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
+        # ✨ תיקון 2: הסרת השדה o.DeliveryDate משאילתת ה-SELECT כדי שלא יקרו שגיאות דאטהבייס
         query = """
-            SELECT o.OrderId, o.Price, o.OrderDate, s.StoreName, o.DriverID, o.Status, o.StoreID, o.DeliveryDate
+            SELECT o.OrderId, o.Price, o.OrderDate, s.StoreName, o.DriverID, o.Status, o.StoreID
             FROM "ORDER" o
             JOIN STORE s ON o.StoreID = s.StoreID
             WHERE 1=1
@@ -135,10 +135,10 @@ def refresh_orders_data(tree, search_id="", search_store=""):
         cursor.execute(query, tuple(params))
         for row in cursor.fetchall():
             o_date = row[2].strftime('%Y-%m-%d %H:%M') if row[2] else "-"
-            d_date = row[7].strftime('%Y-%m-%d %H:%M') if row[7] else "טרם נשלח"
             status_val = str(row[5]).strip()
             row_tag = "pending_order" if status_val == "PENDING" else "processed_order"
-            tree.insert("", "end", values=(status_val, row[4], f"סניף {row[6]} - {row[3]}", d_date, o_date, f"₪{row[1]:,.2f}", row[0], row[6]), tags=(row_tag,))
+            # ✨ תיקון 3: ארגון מחדש של מערך ה-values ללא עמודת תאריך המסירה שהוסרה
+            tree.insert("", "end", values=(status_val, row[4], f"סניף {row[6]} - {row[3]}", o_date, f"₪{row[1]:,.2f}", row[0], row[6]), tags=(row_tag,))
         cursor.close()
         conn.close()
 
@@ -147,7 +147,7 @@ def open_order_modal(tree, edit_data=None):
     is_edit = edit_data is not None
     modal = ctk.CTkToplevel()
     modal.title("עריכת הזמנה" if is_edit else "הזמנת הפצה חדשה")
-    modal.geometry("420x520")
+    modal.geometry("420x460")
     try: modal.transient(tree.winfo_toplevel())
     except: pass
     modal.grab_set()
@@ -170,26 +170,22 @@ def open_order_modal(tree, edit_data=None):
     id_entry = ctk.CTkEntry(modal, justify="right")
     id_entry.pack(fill="x", padx=40, pady=2)
     if is_edit:
-        id_entry.insert(0, edit_data[6])
+        id_entry.insert(0, edit_data[5]) # אינדקס מעודכן
         id_entry.configure(state="disabled", fg_color="#E5E7EB")
 
     ctk.CTkLabel(modal, text="עלות הזמנה כוללת", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     price_entry = ctk.CTkEntry(modal, justify="right")
     price_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit: price_entry.insert(0, edit_data[5].replace("₪", "").replace(",", ""))
+    if is_edit: price_entry.insert(0, edit_data[4].replace("₪", "").replace(",", "")) # אינדקס מעודכן
 
-    ctk.CTkLabel(modal, text="תאריך אספקה (YYYY-MM-DD HH:MM)", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
-    deliv_entry = ctk.CTkEntry(modal, justify="right")
-    deliv_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit and edit_data[3] != "טרם סופק": 
-        deliv_entry.insert(0, edit_data[3])
+    # ✨ תיקון 4: שדה הקלט deliv_entry (תאריך מסירה) והכותרת שלו הוסרו לחלוטין מהמודאל הגרפי!
 
     ctk.CTkLabel(modal, text="סניף יעד מזמין", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     store_option = ctk.CTkOptionMenu(modal, values=stores_list)
     store_option.pack(fill="x", padx=40, pady=2)
     if is_edit:
         for s_str in stores_list:
-            if s_str.startswith(str(edit_data[7]) + " -"): store_option.set(s_str)
+            if s_str.startswith(str(edit_data[6]) + " -"): store_option.set(s_str) # אינדקס מעודכן
 
     ctk.CTkLabel(modal, text="נהג/משאית הפצה מיועדת", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     truck_option = ctk.CTkOptionMenu(modal, values=trucks_list)
@@ -206,7 +202,6 @@ def open_order_modal(tree, edit_data=None):
     def save():
         o_id = id_entry.get().strip()
         price = price_entry.get().strip()
-        d_time_str = deliv_entry.get().strip()
         s_sel = store_option.get()
         t_sel = truck_option.get()
         stat = status_option.get()
@@ -222,14 +217,6 @@ def open_order_modal(tree, edit_data=None):
             messagebox.showwarning("קלט שגוי", "העלות חייבת להיות מספר חיובי.")
             return
 
-        parsed_d_time = None
-        if d_time_str:
-            try:
-                parsed_d_time = datetime.strptime(d_time_str, "%Y-%m-%d %H:%M")
-            except ValueError:
-                messagebox.showwarning("פורמט שגוי", "תאריך האספקה חייב להיות במבנה: YYYY-MM-DD HH:MM")
-                return
-
         s_id = int(s_sel.split(" - ")[0])
         t_id = int(t_sel.split(" - ")[0])
 
@@ -238,20 +225,22 @@ def open_order_modal(tree, edit_data=None):
             cursor = conn.cursor()
             try:
                 if is_edit:
+                    # ✨ תיקון 5: הסרת העמודה DeliveryDate מפקודת ה-UPDATE של בסיס הנתונים
                     cursor.execute("""
                         UPDATE "ORDER" 
-                        SET Price=%s, StoreID=%s, DriverID=%s, Status=%s, DeliveryDate=%s 
+                        SET Price=%s, StoreID=%s, DriverID=%s, Status=%s 
                         WHERE OrderId=%s;
-                    """, (price_val, s_id, t_id, stat, parsed_d_time, int(o_id)))
+                    """, (price_val, s_id, t_id, stat, int(o_id)))
                     conn.commit()
                     messagebox.showinfo("הצלחה", "פרטי ההזמנה עודכנו בהצלחה!")
                     modal.destroy()
                     refresh_orders_data(tree)
                 else:
+                    # ✨ תיקון 6: הסרת העמודה DeliveryDate מפקודת ה-INSERT של בסיס הנתונים
                     cursor.execute("""
-                        INSERT INTO "ORDER" (OrderId, Price, StoreID, DriverID, Status, OrderDate, DeliveryDate) 
-                        VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP, %s);
-                    """, (int(o_id), price_val, s_id, t_id, stat, parsed_d_time))
+                        INSERT INTO "ORDER" (OrderId, Price, StoreID, DriverID, Status, OrderDate) 
+                        VALUES (%s, %s, %s, %s, %s, CURRENT_TIMESTAMP);
+                    """, (int(o_id), price_val, s_id, t_id, stat))
                     conn.commit()
                     messagebox.showinfo("הצלחה", "ההזמנה החדשה נוצרה בהצלחה!")
                     modal.destroy()
@@ -276,7 +265,7 @@ def edit_order(tree):
 def delete_order(tree):
     sel = tree.selection()
     if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר הזמנה לביטול.")
-    o_id = tree.item(sel[0], 'values')[6]
+    o_id = tree.item(sel[0], 'values')[5] # אינדקס מעודכן
     if messagebox.askyesno("אישור ביטול", f"האם את בטוחה שברצונך למחוק לחלוטין את הזמנה מספר {o_id} מהמערכת?"):
         conn = get_db_connection()
         if conn:
@@ -306,7 +295,7 @@ def delete_order(tree):
 def open_contains_manager_modal(tree):
     sel = tree.selection()
     if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורת הזמנה מהטבלה כדי לנהל את תכולת המוצרים שלה.")
-    o_id = tree.item(sel[0], 'values')[6]
+    o_id = tree.item(sel[0], 'values')[5] # אינדקס מעודכן
 
     modal = ctk.CTkToplevel()
     modal.title(f"ניהול פריטי הזמנה מספר {o_id}")
@@ -458,7 +447,6 @@ def setup_trucks_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
-    # --- ✨ תיקון: הוספת עמודת קוד חברה (hidden_cie_id) כעמודה גלויה בטבלה ---
     columns = ("company_name", "hidden_cie_id", "status", "plate", "is_active", "capacity", "driver_id", "hidden_active_num")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
     
@@ -511,7 +499,6 @@ def refresh_trucks_data(tree):
             is_act_num = row[5]
             act_text = "פעיל" if is_act_num == 1 else "מושתת / לא פעיל"
             row_tag = "active_truck" if is_act_num == 1 else "inactive_truck"
-            # גלגול הערכים לפי הסדר החדש של העמודות, כולל הצבת מזהה חברת ההפצה בעמודה הגלויה
             tree.insert("", "end", values=(row[4], row[6], row[3], row[2], act_text, f"{row[1]:.2f}", row[0], is_act_num), tags=(row_tag,))
         cursor.close()
         conn.close()
@@ -675,15 +662,14 @@ def setup_companies_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
-    # === ✨ תוספת עבור כיתוב כחול כהה ומודגש בטבלת חברות ההפצה ===
     style = ttk.Style()
     style.theme_use("clam")
     style.configure("Custom.Treeview",
                     background="#FFFFFF",
-                    foreground="#1E3A8A",  # צבע כחול כהה בולט
+                    foreground="#1E3A8A",  
                     rowheight=40,
                     fieldbackground="#FFFFFF",
-                    font=("Segoe UI", 12, "bold"),  # כתב עבה ומודגש
+                    font=("Segoe UI", 12, "bold"),  
                     borderwidth=0,
                     relief="flat")
     
@@ -695,7 +681,6 @@ def setup_companies_tab(tab):
                     borderwidth=0)
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
-    # ==========================================================
     
     columns = ("regions", "email", "phone", "cie_name", "cie_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
@@ -709,9 +694,7 @@ def setup_companies_tab(tab):
     tree.column("cie_id", width=100, anchor="center", stretch=tk.NO)
     tree.column("cie_name", width=180, anchor="e", stretch=tk.NO)
     tree.column("phone", width=130, anchor="center", stretch=tk.NO)
-    # --- ✨ תיקון: הגדלת שטח הרוחב לעמודת כתובת מייל מ-180 ל-260 ---
     tree.column("email", width=260, anchor="center", stretch=tk.NO)
-    # --- ✨ תיקון: רישום תוכן עמודת אזורי שירות משמאל לימין באמצעות שינוי ה-anchor ל-"w" ---
     tree.column("regions", width=500, anchor="w", stretch=tk.YES) 
 
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
@@ -887,16 +870,16 @@ def open_region_modal(tree):
     region_entry.pack(fill="x", padx=40, pady=2)
 
     def save():
-        reg = region_entry.get().strip()
+        get = region_entry.get().strip()
         cie_sel = cie_option.get()
-        if not reg: return messagebox.showwarning("קלט חסר", "אנא הזיני שם אזור.")
+        if not get: return messagebox.showwarning("קלט חסר", "אנא הזיני שם אזור.")
         
         cie_id = int(cie_sel.split(" - ")[0])
         conn_r = get_db_connection()
         if conn_r:
             cursor_r = conn_r.cursor()
             try:
-                cursor_r.execute("INSERT INTO DELIVERYCOMPANY_REGIONSERVED (DeliveryCieID, RegionServed) VALUES (%s, %s);", (cie_id, reg))
+                cursor_r.execute("INSERT INTO DELIVERYCOMPANY_REGIONSERVED (DeliveryCieID, RegionServed) VALUES (%s, %s);", (cie_id, get))
                 conn_r.commit()
                 modal.destroy()
                 refresh_companies_data(tree)
@@ -1019,7 +1002,7 @@ def open_calculate_price_modal(tree):
         return messagebox.showwarning("בחירה חובה", "אנא בחר שורת הזמנה מהטבלה לצורך חישוב עלות.")
     
     vals = tree.item(sel[0], 'values')
-    o_id = vals[6]
+    o_id = vals[5] # אינדקס מעודכן
     
     modal = ctk.CTkToplevel()
     modal.title("חישוב עלות רכש מספק")
@@ -1082,13 +1065,13 @@ def trigger_complete_order_procedure(tree):
         return messagebox.showwarning("בחירה חובה", "אנא בחר שורת הזמנה לצורך השלמה וקליטה במלאי.")
         
     vals = tree.item(sel[0], 'values')
-    o_id = vals[6]
+    o_id = vals[5] # אינדקס מעודכן
     current_status = vals[0]
     
     if current_status == "COMPLETED":
         return messagebox.showwarning("הזמנה סגורה", f"הזמנה מספר {o_id} כבר סומנה כ-COMPLETED בעבר והמלאי עודכן.")
         
-    if not messagebox.askyesno("אישור קליטת מלאי", f"האם את בטוחה שברצונך להשלים את הזמנה מספר {o_id}?\n\nפעולה זו תפעיל פרוצדורת שרת ותעדכן את המלאי בחנות."):
+    if not messagebox.askyesno("אישור קליטת מלאי", f"האם את בטוחה שברצונך להשלים את הזמנה מספר {o_id}?\\n\\nפעולה זו תפעיל פרוצדורת שרת ותעדכן את המלאי בחנות."):
         return
         
     conn = get_db_connection()
@@ -1104,8 +1087,8 @@ def trigger_complete_order_procedure(tree):
             messagebox.showinfo("קליטה הצליחה", 
                                 f"🎉 הפרוצדורה בוצעה בהצלחה!\n\n"
                                 f"📊 סיכום פעולת קליטת המלאי:\n"
-                                f"▫️ סטטוס ההזמנה עודכן ל-COMPLETED.\n"
-                                f"▫️ עודכנו ונקלטו בהצלחה: {items_count} מוצרים שונים במלאי החנות.\n\n"
+                                f"▫️ סטטוס ההזמנה עודכן ל-COMPLETED.\\n"
+                                f"▫️ עודכנו ונקלטו בהצלחה: {items_count} מוצרים שונים במלאי החנות.\\n\\n"
                                 f"הנתונים בטבלת INVENTORY סונכרנו.")
             refresh_orders_data(tree)
         except Exception as e:
