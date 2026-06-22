@@ -15,24 +15,32 @@ def show_stores_view(main_frame):
     sub_header = ctk.CTkLabel(main_frame, text="צפייה, הוספה, עריכה ומחיקה של סניפים פעילים במערכת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
     sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
-    # --- שורת חיפוש עליונה ---
+    # --- 🔍 שורת מסנני חיפוש משולבת וסימטרית ---
     search_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     search_frame.pack(padx=35, fill="x", pady=(0, 15))
     
-    search_lbl = ctk.CTkLabel(search_frame, text="🔍   חיפוש סניף לפי שם", font=("Segoe UI", 13, "bold"), text_color="#374151")
-    search_lbl.pack(side="right", padx=(10, 0))
+    search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
+    search_lbl.pack(side="right", padx=(10, 15))
     
-    search_entry = ctk.CTkEntry(search_frame, placeholder_text="הקלידי שם סניף לחיפוש", font=("Segoe UI", 13), width=280, height=35, corner_radius=8, justify="right")
-    search_entry.pack(side="right")
-    
-    # הפעלת חיפוש בזמן אמת בעת הקלדה
-    search_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_entry.get().strip()))
+    search_entry = ctk.CTkEntry(search_frame, placeholder_text="חפש לפי שם סניף מדויק ", font=("Segoe UI", 13), width=180, height=35, corner_radius=8, justify="right")
+    search_entry.pack(side="right", padx=(0, 15))
 
-    # --- ✨ החזרה למקום המקורי: שורת כפתורי פעולה מתחת לחיפוש ---
+    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="חפש לפי קוד סניף", font=("Segoe UI", 13), width=180, height=35, corner_radius=8, justify="right")
+    search_id_entry.pack(side="right")
+    
+    # ✨ תיקון: איפוס ה-ID וביצוע חיפוש מדויק (בלי אחוזים) בעת לחיצה על אנטר
+    def trigger_name_search(event):
+        search_id_entry.delete(0, tk.END)  # איפוס תיבת ה-ID כדי לבצע חיפוש בלעדי לפי שם
+        refresh_table(tree, search_entry.get().strip(), "")
+
+    # קשירת אירועים: השם מאזין לאנטר לחיפוש מדויק, וה-ID ממשיך לחפש בזמן אמת
+    search_entry.bind("<Return>", trigger_name_search)
+    search_id_entry.bind("<KeyRelease>", lambda event: refresh_table(tree, search_entry.get().strip(), search_id_entry.get().strip()))
+
+    # --- שורת כפתורי פעולה מתחת לחיפוש ---
     action_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
     action_frame.pack(padx=35, fill="x", pady=(0, 15))
 
-    # כפתור הוספת סניף חזר למיקומו המקורי בצד ימין (כפתור הרענון הוסר בהצלחה)
     add_btn = ctk.CTkButton(action_frame, text="➕   הוספת סניף חדש", font=("Segoe UI", 13, "bold"), fg_color="#10B981", hover_color="#059669", width=160, height=40, corner_radius=10, command=lambda: open_store_modal(tree))
     add_btn.pack(side="right", padx=5)
 
@@ -45,10 +53,10 @@ def show_stores_view(main_frame):
     
     style.configure("Custom.Treeview",
                     background="#FFFFFF",
-                    foreground="#111827",
+                    foreground="#1E3A8A",
                     rowheight=40,
                     fieldbackground="#FFFFFF",
-                    font=("Segoe UI", 12),
+                    font=("Segoe UI", 12, "bold"),
                     borderwidth=0,
                     relief="flat")
     
@@ -61,11 +69,9 @@ def show_stores_view(main_frame):
     
     style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    # שמירה על עמודת קוד סניף גלויה בטבלה
     columns = ("emp_count", "region", "address", "website", "rating", "email", "phone", "name", "store_id")
     tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
 
-    # כותרות העמודות
     tree.heading("store_id", text="קוד סניף", anchor="center")
     tree.heading("name", text="שם סניף", anchor="center")
     tree.heading("phone", text="טלפון", anchor="center")
@@ -76,7 +82,6 @@ def show_stores_view(main_frame):
     tree.heading("region", text="מחוז/אזור", anchor="center")
     tree.heading("emp_count", text="מספר עובדים", anchor="center")
 
-    # רוחב ומתיחה נכונה לעמודות
     tree.column("store_id", width=90, anchor="center", stretch=tk.NO)
     tree.column("name", width=260, anchor="e", stretch=tk.YES)       
     tree.column("phone", width=140, anchor="center", stretch=tk.NO)
@@ -90,7 +95,6 @@ def show_stores_view(main_frame):
     tree.tag_configure("has_employees", foreground="#1E3A8A", font=("Segoe UI", 12, "bold"))
     tree.tag_configure("no_employees", foreground="#6B7280", font=("Segoe UI", 12))
 
-    # סרגלי גלילה
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview)
     
@@ -100,7 +104,6 @@ def show_stores_view(main_frame):
     v_scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
     tree.pack(side="right", fill="both", expand=True, padx=(15, 0), pady=15)
 
-    # שורת כפתורי CRUD תחתונים
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
     bottom_actions.pack(padx=35, fill="x", pady=(0, 30))
 
@@ -113,7 +116,7 @@ def show_stores_view(main_frame):
     refresh_table(tree)
 
 
-def refresh_table(tree, search_query=""):
+def refresh_table(tree, search_query="", search_id=""):
     for item in tree.get_children():
         tree.delete(item)
 
@@ -121,27 +124,29 @@ def refresh_table(tree, search_query=""):
     if conn:
         cursor = conn.cursor()
         try:
+            query = """
+                SELECT s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region,
+                       COUNT(e.EmployeeID) AS TotalEmployees
+                FROM STORE s
+                LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID
+                WHERE 1=1
+            """
+            params = []
+            
+            # ✨ תיקון קריטי: שימוש בסימן שוויון (=) ואיטום ללא %s% כדי לחפש את השם המדויק בלבד ללא תוצאות חלקיות
             if search_query:
-                query = """
-                    SELECT s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region,
-                           COUNT(e.EmployeeID) AS TotalEmployees
-                    FROM STORE s
-                    LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID
-                    WHERE s.StoreName ILIKE %s
-                    GROUP BY s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region
-                    ORDER BY s.StoreID ASC;
-                """
-                cursor.execute(query, (f"%{search_query}%",))
-            else:
-                query = """
-                    SELECT s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region,
-                           COUNT(e.EmployeeID) AS TotalEmployees
-                    FROM STORE s
-                    LEFT JOIN EMPLOYEE e ON s.StoreID = e.StoreID
-                    GROUP BY s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region
-                    ORDER BY s.StoreID ASC;
-                """
-                cursor.execute(query)
+                query += " AND s.StoreName = %s"
+                params.append(search_query)
+                
+            if search_id and search_id.isdigit():
+                query += " AND s.StoreID = %s"
+                params.append(int(search_id))
+
+            query += """
+                GROUP BY s.StoreID, s.StoreName, s.Phone, s.StoreEmail, s.Rating, s.websiteurl, s.Address, s.Region
+                ORDER BY s.StoreID ASC;
+            """
+            cursor.execute(query, tuple(params))
 
             rows = cursor.fetchall()
             for row in rows:
@@ -296,7 +301,7 @@ def save_store(modal, widgets, tree, is_edit):
                     f"💡 הסיבה:\n"
                     f"קוד סניף מספר {s_id} כבר תפוס ורשום על ידי חנות אחרת ברשת!\n\n"
                     f"🛠️ מה צריך לעשות?\n"
-                    f"אנא בחרי מספר מזהה (קוד) ייחודי ופנוי שאינו קיים עדיין במערכת."
+                    f"אנא בחר מספר מזהה (קוד) ייחודי ופנוי שאינו קיים עדיין במערכת."
                 )
             else:
                 messagebox.showerror("שגיאה בפעולה", f"הפעולה נכשלה במערכת:\n{error_msg}")
@@ -308,7 +313,7 @@ def save_store(modal, widgets, tree, is_edit):
 def edit_selected_store(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("נא לבחור שורה", "אנא בחרי סניף מהטבלה לצורך עריכה.")
+        messagebox.showwarning("נא לבחור שורה", "אנא בחר סניף מהטבלה לצורך עריכה.")
         return
     
     item_values = tree.item(selected[0], 'values')
@@ -329,7 +334,7 @@ def edit_selected_store(tree):
 def delete_selected_store(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("נא לבחור שורה", "אנא בחרי סניף מהטבלה למחיקה.")
+        messagebox.showwarning("נא לבחור שורה", "אנא בחר סניף מהטבלה למחיקה.")
         return
     
     item_values = tree.item(selected[0], 'values')
@@ -356,7 +361,7 @@ def delete_selected_store(tree):
                     f"פעולת המחיקה עבור סניף '{store_name}' נחסמה באופן מאובטח.\n\n"
                     f"💡 מדוע זה קרה?\n"
                     f"בסיס הנתונים מזהה שקיימים כרגע ברשת נתונים פעילים המשויכים ישירות לחנות הזו (עובדים הרשומים בסניף, סחורה קיימת במלאי, או הזמנות הפצה בתהליך).\n\n"
-                    f"🛠️ מה צריך לעשות עכשיו?\n"
+                    f"🛠️ מה צריך לעשות?\n"
                     f"על מנת לבצע את המחיקה, יש להיכנס תחילה ללשוניות המתאימות (כמו 'ניהול עובדים' או 'מלאי') ולהעביר או למחוק את הרשומות המשויכות לסניף זה."
                 )
             else:

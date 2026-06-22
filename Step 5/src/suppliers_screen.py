@@ -218,12 +218,12 @@ def open_supplier_modal(tree, edit_data=None):
 
 def edit_supplier(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי ספק מהטבלה לעריכה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר ספק מהטבלה לעריכה.")
     open_supplier_modal(tree, tree.item(sel[0], 'values'))
 
 def delete_supplier(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי ספק למחיקה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר ספק למחיקה.")
     s_id = tree.item(sel[0], 'values')[4]
     s_name = tree.item(sel[0], 'values')[3]
     
@@ -368,11 +368,11 @@ def open_supplied_by_modal(tree, edit_data=None):
 
     suppliers_list, products_list = get_suppliers_and_products_lists()
 
-    ctk.CTkLabel(modal, text="בחרי חברת ספק", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר חברת ספק", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     s_option = ctk.CTkOptionMenu(modal, values=suppliers_list if suppliers_list else ["אין ספקים"])
     s_option.pack(fill="x", padx=40, pady=4)
 
-    ctk.CTkLabel(modal, text="בחרי מוצר מורשה מהקטלוג", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר מוצר מורשה מהקטלוג", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     p_option = ctk.CTkOptionMenu(modal, values=products_list if products_list else ["אין מוצרים"])
     p_option.pack(fill="x", padx=40, pady=4)
 
@@ -418,13 +418,13 @@ def open_supplied_by_modal(tree, edit_data=None):
 
 def edit_supplied_by(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורת שיוך מהטבלה לצורך עריכה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורת שיוך מהטבלה לצורך עריכה.")
     open_supplied_by_modal(tree, tree.item(sel[0], 'values'))
 
 
 def delete_supplied_by(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורת שיוך לבטול המינוי.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורת שיוך לבטול המינוי.")
     vals = tree.item(sel[0], 'values')
     prod_id = vals[1]
     sup_id = vals[3]

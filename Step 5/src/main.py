@@ -87,7 +87,7 @@ class RamiLeviApp(ctk.CTk):
         self.create_sidebar_button("warehouses", "🏭   מחסנים לוגיסטיים", lambda: self.switch_view("warehouses"))
         self.create_sidebar_button("inventory", "📦   מלאי ומוצרים", lambda: self.switch_view("inventory"))
         self.create_sidebar_button("suppliers", "🚚   ספקים ורכש", lambda: self.switch_view("suppliers"))
-        self.create_sidebar_button("orders", "🛒   הזמנות הפצה", lambda: self.switch_view("orders"))
+        self.create_sidebar_button("orders", "🛒   הזמנות והפצה", lambda: self.switch_view("orders"))
         self.create_sidebar_button("discounts", "🏷️   מבצעים והנחות", lambda: self.switch_view("discounts"))
 
         # פרופיל משתמש

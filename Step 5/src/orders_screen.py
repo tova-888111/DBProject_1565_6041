@@ -10,10 +10,10 @@ def show_orders_view(main_frame):
         widget.destroy()
 
     # --- ✨ תיקון: שינוי הכותרות שיהיו זהות לחלוטין לקבצים הקודמים ---
-    header_label = ctk.CTkLabel(main_frame, text="ניהול מבצעים והנחות רשתיים", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
+    header_label = ctk.CTkLabel(main_frame, text=" ניהול הזמנות והפצה", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
     header_label.pack(pady=(35, 4), padx=35, fill="x")
     
-    sub_header = ctk.CTkLabel(main_frame, text="הגדרה וניהול של אחוזי הנחה, תאריכי תוקף והחלת מבצעים על מוצרי הרשת", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
+    sub_header = ctk.CTkLabel(main_frame, text="הגדרה וניהול של הזמנות מהמחסנים לסניפים השונים, וחברות המשלוחים השונות ", font=("Segoe UI", 14, "bold"), text_color="#4B5563", anchor="e")
     sub_header.pack(pady=(0, 20), padx=35, fill="x")
 
     # --- מערכת הטאבים המרכזית (Tabview) ---
@@ -74,8 +74,8 @@ def setup_orders_tab(tab):
     
     tree.heading("order_id", text="קוד הזמנה", anchor="center")
     tree.heading("price", text="עלות כוללת", anchor="center")
-    tree.heading("order_date", text="תאריך יצירה", anchor="center")
-    tree.heading("deliv_date", text="תאריך אספקה מיועד", anchor="center")
+    tree.heading("order_date", text="תאריך יצירת הזמנה", anchor="center")
+    tree.heading("deliv_date", text="תאריך שליחת הזמנה", anchor="center")
     tree.heading("store_info", text="סניף יעד מבוקש", anchor="center")
     tree.heading("driver_id", text="קוד נהג / משאית", anchor="center")
     tree.heading("status", text="סטטוס הפצה", anchor="center")
@@ -135,7 +135,7 @@ def refresh_orders_data(tree, search_id="", search_store=""):
         cursor.execute(query, tuple(params))
         for row in cursor.fetchall():
             o_date = row[2].strftime('%Y-%m-%d %H:%M') if row[2] else "-"
-            d_date = row[7].strftime('%Y-%m-%d %H:%M') if row[7] else "טרם סופק"
+            d_date = row[7].strftime('%Y-%m-%d %H:%M') if row[7] else "טרם נשלח"
             status_val = str(row[5]).strip()
             row_tag = "pending_order" if status_val == "PENDING" else "processed_order"
             tree.insert("", "end", values=(status_val, row[4], f"סניף {row[6]} - {row[3]}", d_date, o_date, f"₪{row[1]:,.2f}", row[0], row[6]), tags=(row_tag,))
@@ -270,12 +270,12 @@ def open_order_modal(tree, edit_data=None):
 
 def edit_order(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה מהטבלה לעריכה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורה מהטבלה לעריכה.")
     open_order_modal(tree, tree.item(sel[0], 'values'))
 
 def delete_order(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי הזמנה לביטול.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר הזמנה לביטול.")
     o_id = tree.item(sel[0], 'values')[6]
     if messagebox.askyesno("אישור ביטול", f"האם את בטוחה שברצונך למחוק לחלוטין את הזמנה מספר {o_id} מהמערכת?"):
         conn = get_db_connection()
@@ -305,7 +305,7 @@ def delete_order(tree):
 
 def open_contains_manager_modal(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורת הזמנה מהטבלה כדי לנהל את תכולת המוצרים שלה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורת הזמנה מהטבלה כדי לנהל את תכולת המוצרים שלה.")
     o_id = tree.item(sel[0], 'values')[6]
 
     modal = ctk.CTkToplevel()
@@ -373,7 +373,7 @@ def open_contains_manager_modal(tree):
 
     def edit_item_qty():
         c_sel = c_tree.selection()
-        if not c_sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי פריט מהרשימה לעריכה.")
+        if not c_sel: return messagebox.showwarning("בחירה חובה", "אנא בחר פריט מהרשימה לעריכה.")
         vals = c_tree.item(c_sel[0], 'values')
         p_id = vals[2]
         p_name = vals[1]
@@ -410,7 +410,7 @@ def open_contains_manager_modal(tree):
 
     def delete_item():
         c_sel = c_tree.selection()
-        if not c_sel: return messagebox.showwarning("בחירה חובה", "בחרי פריט למחיקה.")
+        if not c_sel: return messagebox.showwarning("בחירה חובה", "בחר פריט למחיקה.")
         p_id = c_tree.item(c_sel[0], 'values')[2]
         conn_del = get_db_connection()
         if conn_del:
@@ -625,12 +625,12 @@ def open_truck_modal(tree, edit_data=None):
 
 def edit_truck(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי רכב מהטבלה לעריכה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר רכב מהטבלה לעריכה.")
     open_truck_modal(tree, tree.item(sel[0], 'values'))
 
 def delete_truck(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי רכב להשבתה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר רכב להשבתה.")
     d_id = tree.item(sel[0], 'values')[6]
     if messagebox.askyesno("אישור פעולה", f"האם את בטוחה שברצונך למחוק ולהשבית רכב מספר {d_id} מצי ההפצה?"):
         conn = get_db_connection()
@@ -826,12 +826,12 @@ def open_company_modal(tree, edit_data=None):
 
 def edit_company(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי חברה מהטבלה לעריכה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר חברה מהטבלה לעריכה.")
     open_company_modal(tree, tree.item(sel[0], 'values'))
 
 def delete_company(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי חברה למחיקה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר חברה למחיקה.")
     c_id = tree.item(sel[0], 'values')[4]
     if messagebox.askyesno("אישור מחיקה", f"האם למחוק את חברת ההפצה מספר {c_id}?"):
         conn = get_db_connection()
@@ -878,7 +878,7 @@ def open_region_modal(tree):
 
     ctk.CTkLabel(modal, text="🗺️ הוספת אזור פעילות לחברה", font=("Segoe UI", 15, "bold")).pack(pady=15)
     
-    ctk.CTkLabel(modal, text="בחרי חברת הפצה", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר חברת הפצה", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     cie_option = ctk.CTkOptionMenu(modal, values=companies_list)
     cie_option.pack(fill="x", padx=40, pady=2)
 
@@ -911,7 +911,7 @@ def open_region_modal(tree):
 
 def open_edit_region_modal(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי חברה מהטבלה כדי לערוך את אזורי השירות שלה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר חברה מהטבלה כדי לערוך את אזורי השירות שלה.")
     c_id = tree.item(sel[0], 'values')[4]
     
     modal = ctk.CTkToplevel()
@@ -934,7 +934,7 @@ def open_edit_region_modal(tree):
 
     ctk.CTkLabel(modal, text="✏️ עריכת אזור שירות קיים", font=("Segoe UI", 15, "bold")).pack(pady=10)
     
-    ctk.CTkLabel(modal, text="בחרי את האזור הנוכחי שברצונך לשנות", font=("Segoe UI", 11), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר את האזור הנוכחי שברצונך לשנות", font=("Segoe UI", 11), text_color="#4B5563").pack(anchor="e", padx=40)
     r_option = ctk.CTkOptionMenu(modal, values=regions_list)
     r_option.pack(fill="x", padx=40, pady=5)
     
@@ -969,7 +969,7 @@ def open_edit_region_modal(tree):
 
 def delete_region(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי חברה מהטבלה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר חברה מהטבלה.")
     c_id = tree.item(sel[0], 'values')[4]
     
     modal = ctk.CTkToplevel()
@@ -990,7 +990,7 @@ def delete_region(tree):
         modal.destroy()
         return messagebox.showwarning("שגיאה", "לחברה זו לא מוגדרים אזורי שירות להסרה.")
 
-    ctk.CTkLabel(modal, text="בחרי אזור להסרה", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר אזור להסרה", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     r_option = ctk.CTkOptionMenu(modal, values=regions_list)
     r_option.pack(fill="x", padx=40, pady=15)
 
@@ -1016,7 +1016,7 @@ def open_calculate_price_modal(tree):
     """חלונית מודאלית להזנת אחוז סיטונאי והפעלת הפונקציה calculate_order_price"""
     sel = tree.selection()
     if not sel: 
-        return messagebox.showwarning("בחירה חובה", "אנא בחרי שורת הזמנה מהטבלה לצורך חישוב עלות.")
+        return messagebox.showwarning("בחירה חובה", "אנא בחר שורת הזמנה מהטבלה לצורך חישוב עלות.")
     
     vals = tree.item(sel[0], 'values')
     o_id = vals[6]
@@ -1079,7 +1079,7 @@ def trigger_complete_order_procedure(tree):
     """מפעיל את הפרוצדורה complete_order_and_update_stock ומציג כמה מוצרים עודכנו במלאי"""
     sel = tree.selection()
     if not sel: 
-        return messagebox.showwarning("בחירה חובה", "אנא בחרי שורת הזמנה לצורך השלמה וקליטה במלאי.")
+        return messagebox.showwarning("בחירה חובה", "אנא בחר שורת הזמנה לצורך השלמה וקליטה במלאי.")
         
     vals = tree.item(sel[0], 'values')
     o_id = vals[6]

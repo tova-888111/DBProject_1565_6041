@@ -139,7 +139,7 @@ def show_dashboard_view(main_frame):
     create_summary_box(
         alerts_wrapper, 
         title="חוסר קריטי ברשת", 
-        value=f"{out_of_stock_count}-מוצרים", 
+        value=f"{out_of_stock_count}", 
         desc="פריטים שאזלו לחלוטין מהמלאי ודורשים הזמנה מיידית מהספק", 
         bg_color="#FEF2F2", 
         text_color="#991B1B"
@@ -148,7 +148,7 @@ def show_dashboard_view(main_frame):
     create_summary_box(
         alerts_wrapper, 
         title="מתחת לסף מינימום", 
-        value=f"{low_stock_count}-מוצרים", 
+        value=f"{low_stock_count}", 
         desc="פריטים שהגיעו לקו האדום של המלאי שהוגדר בסניף", 
         bg_color="#FFFBEB", 
         text_color="#92400E"

@@ -333,7 +333,7 @@ def save_employee(modal, widgets, tree, is_edit):
 def edit_selected_employee(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("נא לבחור שורה", "אנא בחרי עובד מהטבלה לצורך עריכה.")
+        messagebox.showwarning("נא לבחור שורה", "אנא בחר עובד מהטבלה לצורך עריכה.")
         return
     
     item_values = tree.item(selected[0], 'values')

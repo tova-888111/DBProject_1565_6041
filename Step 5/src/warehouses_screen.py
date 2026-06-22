@@ -8,7 +8,7 @@ def show_warehouses_view(main_frame):
     for widget in main_frame.winfo_children():
         widget.destroy()
 
-    # --- כותרת עליונה מנופחת ומודגשת עם הדגש המבוקש לתפעול הרשת ---
+    # --- כותרת עליונה מנופחת ומודגשת ---
     header_label = ctk.CTkLabel(main_frame, text="מערך לוגיסטיקה ומחסני הרשת", font=("Segoe UI", 32, "bold"), text_color="#111827", anchor="e")
     header_label.pack(pady=(35, 4), padx=35, fill="x")
     
@@ -29,7 +29,7 @@ def show_warehouses_view(main_frame):
 
     # הגדרת הטאבים
     tab_warehouses = tabview.add("🏢  ניהול מחסנים וצוות מנהלים")
-    tab_located = tabview.add("📦  איתור ומיקומי מוצרים במלאי")
+    tab_located = tabview.add("📦  איתור ומיקומי מוצרים במחסנים")
 
     setup_combined_warehouses_tab(tab_warehouses)
     setup_located_products_tab(tab_located)
@@ -45,20 +45,17 @@ def setup_combined_warehouses_tab(tab):
     search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 15))
     
-    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_id_entry = ctk.CTkEntry(search_frame, placeholder_text="חפש לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_id_entry.pack(side="right", padx=(0, 15))
     
-    search_name_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי שם מנהל", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
-    search_name_entry.pack(side="right")
+    search_addr_entry = ctk.CTkEntry(search_frame, placeholder_text="חפש לפי כתובת מחסן", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_addr_entry.pack(side="right")
     
-    search_id_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
-    search_name_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_name_entry.get().strip()))
+    search_id_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_addr_entry.get().strip()))
+    search_addr_entry.bind("<KeyRelease>", lambda event: refresh_combined_warehouses_data(tree, search_id_entry.get().strip(), search_addr_entry.get().strip()))
 
     btn_frame = ctk.CTkFrame(tab, fg_color="transparent")
     btn_frame.pack(fill="x", pady=(0, 10))
-    
-    add_mgr_btn = ctk.CTkButton(btn_frame, text="👤 מינוי מנהל למחסן קיים", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_manager_add_modal(tree))
-    add_mgr_btn.pack(side="left", padx=5)
     
     add_w_btn = ctk.CTkButton(btn_frame, text="🏢 הקמת מחסן חדש ברשת", font=("Segoe UI", 12, "bold"), fg_color="#10B981", hover_color="#059669", height=35, corner_radius=10, command=lambda: open_warehouse_modal(tree))
     add_w_btn.pack(side="right", padx=5)
@@ -72,8 +69,8 @@ def setup_combined_warehouses_tab(tab):
     style = ttk.Style()
     style.theme_use("clam")
     
-    # ✨ עדכון פה: הגדרת הצבע לכחול כהה והוספת "bold" לכתב מודגש
-    style.configure("Custom.Treeview",
+    # ✨ בידוד סטייל: שינוי שם הסטייל ל-Wh.Treeview למניעת התנגשויות ודריסת צבעים
+    style.configure("Wh.Treeview",
                     background="#FFFFFF",
                     foreground="#1E3A8A",
                     rowheight=40,
@@ -82,27 +79,25 @@ def setup_combined_warehouses_tab(tab):
                     borderwidth=0,
                     relief="flat")
     
-    style.configure("Custom.Treeview.Heading",
+    style.configure("Wh.Treeview.Heading",
                     background="#F9FAFB",
                     foreground="#4B5563",
                     font=("Segoe UI", 13, "bold"),
                     relief="flat",
                     borderwidth=0)
     
-    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
+    style.map("Wh.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
 
-    columns = ("manager", "address", "region", "warehouse_id")
-    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
+    columns = ("address", "region", "warehouse_id")
+    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Wh.Treeview")
     
     tree.heading("warehouse_id", text="קוד מחסן", anchor="center")
     tree.heading("region", text="אזור גיאוגרפי", anchor="center")
     tree.heading("address", text="כתובת המחסן", anchor="center")
-    tree.heading("manager", text="מנהל מחסן אחראי", anchor="center")
 
-    tree.column("warehouse_id", width=120, anchor="center", stretch=tk.YES)
-    tree.column("region", width=160, anchor="center", stretch=tk.YES)
-    tree.column("address", width=280, anchor="e", stretch=tk.YES)
-    tree.column("manager", width=220, anchor="e", stretch=tk.YES)
+    tree.column("warehouse_id", width=200, anchor="center", stretch=tk.NO)
+    tree.column("region", width=350, anchor="center", stretch=tk.NO)
+    tree.column("address", width=350, anchor="e", stretch=tk.YES)
 
     v_scrollbar = ttk.Scrollbar(table_container, orient="vertical", command=tree.yview)
     tree.configure(yscrollcommand=v_scrollbar.set)
@@ -116,38 +111,35 @@ def setup_combined_warehouses_tab(tab):
     ctk.CTkButton(actions, text="✏️ עריכת מיקום מחסן", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_warehouse(tree)).pack(side="right", padx=5)
     ctk.CTkButton(actions, text="🗑️ סגירת מחסן מהרשת", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_warehouse(tree)).pack(side="right", padx=25)
     
-    ctk.CTkButton(actions, text="🗑️ ביטול מינוי מנהל", font=("Segoe UI", 12, "bold"), fg_color="#EF4444", hover_color="#DC2626", height=35, corner_radius=10, command=lambda: delete_manager(tree)).pack(side="left", padx=5)
-    ctk.CTkButton(actions, text="✏️ החלפת מנהל מחסן", font=("Segoe UI", 12, "bold"), fg_color="#3B82F6", hover_color="#2563EB", height=35, corner_radius=10, command=lambda: edit_manager(tree)).pack(side="left", padx=5)
+    ctk.CTkButton(actions, text="📜 צפייה במנהלים", font=("Segoe UI", 12, "bold"), fg_color="#8B5CF6", hover_color="#7C3AED", height=35, corner_radius=10, command=lambda: open_managers_manager_modal(tree)).pack(side="left", padx=5)
 
     refresh_combined_warehouses_data(tree)
 
 
-def refresh_combined_warehouses_data(tree, search_id="", search_name=""):
+def refresh_combined_warehouses_data(tree, search_id="", search_addr=""):
     for item in tree.get_children(): tree.delete(item)
     conn = get_db_connection()
     if conn:
         cursor = conn.cursor()
         
         query = """
-            SELECT w.WarehouseID, w.Region, w.Address, wm.WarehouseManager
+            SELECT w.WarehouseID, w.Region, w.Address
             FROM WAREHOUSE w
-            LEFT JOIN WAREHOUSEMANAGER wm ON w.WarehouseID = wm.WarehouseID
             WHERE 1=1
         """
         params = []
         if search_id and search_id.isdigit():
             query += " AND w.WarehouseID = %s"
             params.append(int(search_id))
-        if search_name:
-            query += " AND wm.WarehouseManager ILIKE %s"
-            params.append(f"%{search_name}%")
+        if search_addr:
+            query += " AND w.Address ILIKE %s"
+            params.append(f"%{search_addr}%")
             
         query += " ORDER BY w.WarehouseID ASC;"
         cursor.execute(query, tuple(params))
             
         for row in cursor.fetchall():
-            manager_val = row[3] if row[3] else "❌ טרם שויך מנהל"
-            tree.insert("", "end", values=(manager_val, row[2], row[1], row[0]))
+            tree.insert("", "end", values=(row[2], row[1], row[0]))
         cursor.close()
         conn.close()
 
@@ -171,18 +163,18 @@ def open_warehouse_modal(tree, edit_data=None):
     id_entry = ctk.CTkEntry(modal, justify="right")
     id_entry.pack(fill="x", padx=40, pady=2)
     if is_edit:
-        id_entry.insert(0, edit_data[3])
+        id_entry.insert(0, edit_data[2]) 
         id_entry.configure(state="disabled", fg_color="#E5E7EB")
 
     ctk.CTkLabel(modal, text="אזור גיאוגרפי בארץ", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     region_entry = ctk.CTkEntry(modal, justify="right")
     region_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit: region_entry.insert(0, edit_data[2])
+    if is_edit: region_entry.insert(0, edit_data[1]) 
 
     ctk.CTkLabel(modal, text="כתובת פיזית מלאה", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     addr_entry = ctk.CTkEntry(modal, justify="right")
     addr_entry.pack(fill="x", padx=40, pady=2)
-    if is_edit: addr_entry.insert(0, edit_data[1])
+    if is_edit: addr_entry.insert(0, edit_data[0]) 
 
     def save():
         w_id = id_entry.get().strip()
@@ -210,7 +202,7 @@ def open_warehouse_modal(tree, edit_data=None):
             except Exception as e:
                 error_msg = str(e)
                 if "duplicate key" in error_msg or "already exists" in error_msg:
-                    messagebox.showerror("קוד מחסן תפוס", f"לא ניתן להקים את המחסן החדש.\n\nקוד מחסן מספר {w_id} כבר תפוס ורשום במערכת הרשת!\nאנא בחרי מספר מזהה ייחודי אחר.")
+                    messagebox.showerror("קוד מחסן תפוס", f"לא ניתן להקים את המחסן החדש.\n\nקוד מחסן מספר {w_id} כבר תפוס ורשום במערכת הרשת!\nאנא בחר מספר מזהה ייחודי אחר.")
                 else:
                     messagebox.showerror("שגיאה", f"הפעולה נכשלה:\n{error_msg}")
             finally:
@@ -222,15 +214,15 @@ def open_warehouse_modal(tree, edit_data=None):
 
 def edit_warehouse(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה מהטבלה לצורך עריכה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורה מהטבלה לצורך עריכה.")
     open_warehouse_modal(tree, tree.item(sel[0], 'values'))
 
 
 def delete_warehouse(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי מחסן למחיקה.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר מחסן למחיקה.")
     vals = tree.item(sel[0], 'values')
-    w_id = vals[3]
+    w_id = vals[2] 
     if messagebox.askyesno("אישור סגירה", f"האם את בטוחה שברצונך לסגור ולמחוק את מחסן מספר {w_id}?"):
         conn = get_db_connection()
         if conn:
@@ -257,130 +249,143 @@ def delete_warehouse(tree):
                 conn.close()
 
 
-def open_manager_add_modal(tree):
-    warehouses_list = []
-    try:
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT WarehouseID, Region FROM WAREHOUSE ORDER BY WarehouseID ASC;")
-            for row in cursor.fetchall():
-                warehouses_list.append(f"{row[0]} - {row[1]}")
-            cursor.close()
-            conn.close()
-    except Exception as e:
-        messagebox.showerror("שגיאת מסד נתונים", f"נכשלה טעינת המחסנים:\n{e}")
-        return
-
-    if not warehouses_list: warehouses_list = ["אין מחסנים קיימים ברשת"]
+# =========================================================================
+# 📜 חלון ניהול המנהלים (כולל גלילה מלאה לכל החלון ו-CRUD מובנה)
+# =========================================================================
+def open_managers_manager_modal(main_tree):
+    sel = main_tree.selection()
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר מחסן מהטבלה לצורך ניהול המנהלים שלו.")
+    
+    vals = main_tree.item(sel[0], 'values')
+    w_id = int(vals[2]) 
+    w_addr = vals[0]
 
     modal = ctk.CTkToplevel()
-    modal.title("מינוי מנהל מחסן")
-    modal.geometry("400x340")
-    
-    try: modal.transient(tree.winfo_toplevel())
-    except: pass
-
-    modal.lift()
-    modal.focus_force()
+    modal.title(f"ניהול מנהלי מחסן - קוד {w_id}")
+    modal.geometry("540x500")
     modal.grab_set()
 
-    ctk.CTkLabel(modal, text="👤 מינוי מנהל מחסן חדש", font=("Segoe UI", 16, "bold")).pack(pady=15)
-    ctk.CTkLabel(modal, text="בחרי מחסן יעד למינוי", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
-    w_option = ctk.CTkOptionMenu(modal, values=warehouses_list)
-    w_option.pack(fill="x", padx=40, pady=2)
+    canvas = tk.Canvas(modal, bg="#F3F4F6", highlightthickness=0)
+    scrollbar = ctk.CTkScrollbar(modal, orientation="vertical", command=canvas.yview)
+    scrollable_frame = ctk.CTkFrame(canvas, fg_color="#F3F4F6", corner_radius=0)
 
-    ctk.CTkLabel(modal, text="שם מנהל המחסן", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
-    name_entry = ctk.CTkEntry(modal, justify="right")
-    name_entry.pack(fill="x", padx=40, pady=2)
+    scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+    canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", width=515)
+    canvas.configure(yscrollcommand=scrollbar.set)
 
-    def save():
-        selected_w = w_option.get()
-        mgr_name = name_entry.get().strip()
-        if selected_w.startswith("אין") or not mgr_name:
-            messagebox.showwarning("שגיאה", "אנא מלאי את כל השדות בצורה תקינה.")
-            return
-        w_id = int(selected_w.split(" - ")[0])
-        
+    scrollbar.pack(side="left", fill="y")
+    canvas.pack(side="right", fill="both", expand=True)
+
+    ctk.CTkLabel(scrollable_frame, text=f"👤 צוות ניהול מחסן: {w_addr}", font=("Segoe UI", 15, "bold"), text_color="#111827").pack(pady=10)
+
+    add_frame = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
+    add_frame.pack(fill="x", padx=25, pady=5)
+    
+    mgr_entry = ctk.CTkEntry(add_frame, placeholder_text="חדש מנהל שם הקלד ", justify="right", width=260, height=35)
+    mgr_entry.pack(side="right", padx=5)
+
+    def add_manager_action():
+        mgr_name = mgr_entry.get().strip()
+        if not mgr_name: return messagebox.showwarning("קלט חסר", "אנא הקלד את שם המנהל.")
         conn = get_db_connection()
         if conn:
             cursor = conn.cursor()
             try:
                 cursor.execute("INSERT INTO WAREHOUSEMANAGER (WarehouseID, WarehouseManager) VALUES (%s, %s);", (w_id, mgr_name))
                 conn.commit()
-                modal.destroy()
-                refresh_combined_warehouses_data(tree)
+                mgr_entry.delete(0, tk.END)
+                refresh_managers_sub_table(sub_tree, w_id)
             except Exception as e:
-                messagebox.showerror("שגיאה במינוי", f"לא ניתן למנות מנהל זה (ייתכן והמחסן כבר מנוהל על ידי גורם אחר):\n{e}")
+                messagebox.showerror("שגיאה", "לא ניתן להוסיף מנהל זה (ייתכן והשם כבר קיים עבור מחסן זה).")
             finally:
                 cursor.close()
                 conn.close()
 
-    ctk.CTkButton(modal, text="בצע", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
+    ctk.CTkButton(add_frame, text="➕  הוספה", fg_color="#10B981", hover_color="#059669", height=35, font=("Segoe UI", 12, "bold"), command=add_manager_action).pack(side="left", padx=5)
+
+    table_container = ctk.CTkFrame(scrollable_frame, fg_color="#FFFFFF", corner_radius=8, border_color="#E5E7EB", border_width=1)
+    table_container.pack(fill="both", expand=True, padx=25, pady=10)
+    table_container.grid_rowconfigure(0, weight=1)
+    table_container.grid_columnconfigure(0, weight=1)
+
+    # ✨ תיקון: הצמדת סטייל ה-Wh.Treeview המבודד גם לתת-הטבלה הפנימית
+    sub_tree = ttk.Treeview(table_container, columns=("manager_name"), show="headings", style="Wh.Treeview")
+    sub_tree.heading("manager_name", text="שם מנהל מורשה", anchor="center")
+    sub_tree.column("manager_name", width=440, anchor="center")
+    sub_tree.grid(row=0, column=0, sticky="nsew", padx=5, pady=5)
+
+    actions_frame = ctk.CTkFrame(scrollable_frame, fg_color="transparent")
+    actions_frame.pack(fill="x", padx=25, pady=(5, 15))
+
+    def edit_manager_action():
+        sub_sel = sub_tree.selection()
+        if not sub_sel: return messagebox.showwarning("בחירה חובה", "אנא בחר מנהל מהרשימה לצורך עריכה.")
+        old_mgr = sub_tree.item(sub_sel[0], 'values')[0]
+
+        edit_modal = ctk.CTkToplevel()
+        edit_modal.title("עדכון שם מנהל")
+        edit_modal.geometry("340x160")
+        edit_modal.grab_set()
+
+        ctk.CTkLabel(edit_modal, text="שם מנהל מעודכן:", font=("Segoe UI", 12, "bold")).pack(pady=10)
+        edit_entry = ctk.CTkEntry(edit_modal, justify="right", width=220)
+        edit_entry.pack(pady=5)
+        edit_entry.insert(0, old_mgr)
+
+        def save_edited_manager():
+            new_mgr = edit_entry.get().strip()
+            if not new_mgr: return messagebox.showwarning("שגיאה", "השם לא יכול להיות ריק.")
+            conn = get_db_connection()
+            if conn:
+                cursor = conn.cursor()
+                try:
+                    cursor.execute("UPDATE WAREHOUSEMANAGER SET WarehouseManager=%s WHERE WarehouseID=%s AND WarehouseManager=%s;", (new_mgr, w_id, old_mgr))
+                    conn.commit()
+                    edit_modal.destroy()
+                    refresh_managers_sub_table(sub_tree, w_id)
+                except Exception as e:
+                    messagebox.showerror("שגיאה", f"העדכון נכשל:\n{e}")
+                finally:
+                    cursor.close()
+                    conn.close()
+
+        ctk.CTkButton(edit_modal, text="שינוי שמור ", fg_color="#3B82F6", command=save_edited_manager).pack(pady=10)
+
+    def delete_manager_action():
+        sub_sel = sub_tree.selection()
+        if not sub_sel: return messagebox.showwarning("בחירה חובה", "אנא בחר מנהל מהטבלה לצורך הסרת המינוי.")
+        target_mgr = sub_tree.item(sub_sel[0], 'values')[0]
+
+        if messagebox.askyesno("אישור הסרה", f"האם את בטוחה שברצונך לבטל את מינויו של '{target_mgr}' כמנהל המחסן?"):
+            conn = get_db_connection()
+            if conn:
+                cursor = conn.cursor()
+                try:
+                    cursor.execute("DELETE FROM WAREHOUSEMANAGER WHERE WarehouseID=%s AND WarehouseManager=%s;", (w_id, target_mgr))
+                    conn.commit()
+                    refresh_managers_sub_table(sub_tree, w_id)
+                except Exception as e:
+                    messagebox.showerror("שגיאה", f"הפעולה נכשלה:\n{e}")
+                finally:
+                    cursor.close()
+                    conn.close()
+
+    ctk.CTkButton(actions_frame, text="✏️מנהל עריכת  ", fg_color="#3B82F6", hover_color="#2563EB", height=35, command=edit_manager_action).pack(side="right", padx=5, expand=True, fill="x")
+    ctk.CTkButton(actions_frame, text="🗑️  מנהל מחיקת", fg_color="#EF4444", hover_color="#DC2626", height=35, command=delete_manager_action).pack(side="left", padx=5, expand=True, fill="x")
+
+    refresh_managers_sub_table(sub_tree, w_id)
 
 
-def edit_manager(tree):
-    sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה מהטבלה לצורך החלפת מנהל.")
-    vals = tree.item(sel[0], 'values')
-    w_id = vals[3]
-    old_mgr = vals[0]
-    
-    modal = ctk.CTkToplevel()
-    modal.title("החלפת מנהל מחסן")
-    modal.geometry("400x260")
-    
-    try: modal.transient(tree.winfo_toplevel())
-    except: pass
-        
-    modal.lift()
-    modal.focus_force()
-    modal.grab_set()
-
-    ctk.CTkLabel(modal, text=f"✏️ עדכון מנהל למחסן מספר {w_id}", font=("Segoe UI", 15, "bold")).pack(pady=15)
-    ctk.CTkLabel(modal, text="שם המנהל החדש", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
-    name_entry = ctk.CTkEntry(modal, justify="right")
-    name_entry.pack(fill="x", padx=40, pady=2)
-    if old_mgr != "❌ טרם שויך מנהל": name_entry.insert(0, old_mgr)
-
-    def save():
-        new_mgr = name_entry.get().strip()
-        if not new_mgr: return messagebox.showwarning("קלט חסר", "אנא הזיני את שם המנהל החדש.")
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM WAREHOUSEMANAGER WHERE WarehouseID=%s;", (int(w_id),))
-            cursor.execute("INSERT INTO WAREHOUSEMANAGER (WarehouseID, WarehouseManager) VALUES (%s, %s);", (int(w_id), new_mgr))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            modal.destroy()
-            refresh_combined_warehouses_data(tree)
-
-    ctk.CTkButton(modal, text="שמור", fg_color="#10B981", hover_color="#059669", height=38, corner_radius=8, command=save).pack(pady=20)
-
-
-def delete_manager(tree):
-    sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה לביטול המינוי.")
-    vals = tree.item(sel[0], 'values')
-    mgr_name = vals[0]
-    w_id = vals[3]
-    if mgr_name == "❌ טרם שויך מנהל": return messagebox.showwarning("שגיאה", "למחסן זה אין מנהל משויך כרגע.")
-    
-    if messagebox.askyesno("אישור ביטול", f"האם לבטל את מינויו של {mgr_name} כמנהל מחסן {w_id}?"):
-        conn = get_db_connection()
-        if conn:
-            cursor = conn.cursor()
-            try:
-                cursor.execute("DELETE FROM WAREHOUSEMANAGER WHERE WarehouseManager=%s AND WarehouseID=%s;", (mgr_name, int(w_id)))
-                conn.commit()
-                refresh_combined_warehouses_data(tree)
-            except Exception as e:
-                messagebox.showerror("חסימת מחיקה", f"לא ניתן לבצע את הפעולה עקב תלות במערכת:\n{e}")
-            finally:
-                cursor.close()
-                conn.close()
+def refresh_managers_sub_table(tree, warehouse_id):
+    for item in tree.get_children(): tree.delete(item)
+    conn = get_db_connection()
+    if conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT WarehouseManager FROM WAREHOUSEMANAGER WHERE WarehouseID = %s ORDER BY WarehouseManager ASC;", (warehouse_id,))
+        for row in cursor.fetchall():
+            tree.insert("", "end", values=(row[0],))
+        cursor.close()
+        conn.close()
 
 
 # =========================================================================
@@ -393,10 +398,10 @@ def setup_located_products_tab(tab):
     search_lbl = ctk.CTkLabel(search_frame, text="🔍  מסנני חיפוש", font=("Segoe UI", 13, "bold"), text_color="#374151")
     search_lbl.pack(side="right", padx=(10, 15))
     
-    search_wh_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_wh_entry = ctk.CTkEntry(search_frame, placeholder_text="חפש לפי קוד מחסן מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_wh_entry.pack(side="right", padx=(0, 15))
     
-    search_prod_entry = ctk.CTkEntry(search_frame, placeholder_text="חפשי לפי קוד מוצר מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
+    search_prod_entry = ctk.CTkEntry(search_frame, placeholder_text="חפש לפי קוד מוצר מדויק", font=("Segoe UI", 12), width=180, height=35, corner_radius=8, justify="right")
     search_prod_entry.pack(side="right")
     
     search_wh_entry.bind("<KeyRelease>", lambda event: refresh_located_data(tree, search_wh_entry.get().strip(), search_prod_entry.get().strip()))
@@ -414,30 +419,9 @@ def setup_located_products_tab(tab):
     table_container.grid_columnconfigure(0, weight=0)
     table_container.grid_columnconfigure(1, weight=1)
 
-    style = ttk.Style()
-    style.theme_use("clam")
-    
-    # ✨ עדכון פה: הגדרת הצבע לכחול כהה והוספת "bold" לכתב מודגש גם בטאב השני
-    style.configure("Custom.Treeview",
-                    background="#FFFFFF",
-                    foreground="#1E3A8A",
-                    rowheight=40,
-                    fieldbackground="#FFFFFF",
-                    font=("Segoe UI", 12, "bold"),
-                    borderwidth=0,
-                    relief="flat")
-    
-    style.configure("Custom.Treeview.Heading",
-                    background="#F9FAFB",
-                    foreground="#4B5563",
-                    font=("Segoe UI", 13, "bold"),
-                    relief="flat",
-                    borderwidth=0)
-    
-    style.map("Custom.Treeview", background=[('selected', '#E0F2FE')], foreground=[('selected', '#0369A1')])
-
     columns = ("shelf_nb", "aisle_nb", "warehouse_addr", "warehouse_id", "product_name", "product_id")
-    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Custom.Treeview")
+    # ✨ תיקון: הצמדת סטייל ה-Wh.Treeview המבודד גם לטבלת המיקומים בטאב השני
+    tree = ttk.Treeview(table_container, columns=columns, show="headings", style="Wh.Treeview")
     
     tree.heading("product_id", text="קוד מוצר", anchor="center")
     tree.heading("product_name", text="שם מוצר בקטלוג", anchor="center")
@@ -530,11 +514,11 @@ def open_located_modal(tree, edit_data=None):
 
     warehouses_list, products_list = get_warehouses_and_products_lists()
 
-    ctk.CTkLabel(modal, text="בחרי מוצר מהקטלוג", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר מוצר מהקטלוג", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     p_option = ctk.CTkOptionMenu(modal, values=products_list if products_list else ["אין מוצרים"])
     p_option.pack(fill="x", padx=40, pady=2)
 
-    ctk.CTkLabel(modal, text="בחרי מחסן לוגיסטי לייעוד", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
+    ctk.CTkLabel(modal, text="בחר מחסן לוגיסטי לייעוד", font=("Segoe UI", 12), text_color="#4B5563").pack(anchor="e", padx=40)
     w_option = ctk.CTkOptionMenu(modal, values=warehouses_list if warehouses_list else ["אין מחסנים"])
     w_option.pack(fill="x", padx=40, pady=2)
 
@@ -598,13 +582,13 @@ def open_located_modal(tree, edit_data=None):
 
 def edit_located(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי מוצר לצורך שינוי מיקומו.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר מוצר לצורך שינוי מיקומו.")
     open_located_modal(tree, tree.item(sel[0], 'values'))
 
 
 def delete_located(tree):
     sel = tree.selection()
-    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחרי שורה לפינוי מהמלאי.")
+    if not sel: return messagebox.showwarning("בחירה חובה", "אנא בחר שורה לפינוי מהמלאי.")
     vals = tree.item(sel[0], 'values')
     p_id = vals[5] 
     w_id = vals[3] 

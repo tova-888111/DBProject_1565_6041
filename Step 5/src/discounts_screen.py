@@ -240,7 +240,7 @@ def save_discount(modal, widgets, tree, is_edit):
 def edit_selected_discount(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("בחירה חובה", "אנא בחרי מבצע מהטבלה לצורך עריכה.")
+        messagebox.showwarning("בחירה חובה", "אנא בחר מבצע מהטבלה לצורך עריכה.")
         return
     val = tree.item(selected[0], 'values')
     data = {'id': val[5], 'name': val[4], 'percentage': val[3].replace("%",""), 'start': val[2], 'end': val[1]}
@@ -250,7 +250,7 @@ def edit_selected_discount(tree):
 def delete_selected_discount(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("בחירה חובה", "אנא בחרי מבצע למחיקה.")
+        messagebox.showwarning("בחירה חובה", "אנא בחר מבצע למחיקה.")
         return
     val = tree.item(selected[0], 'values')
     d_id = val[5]
@@ -276,7 +276,7 @@ def delete_selected_discount(tree):
                     f"💡 הסיבה:\n"
                     f"מבצע זה מוחל כעת באופן פעיל על מוצרים שונים ברחבי הרשת (קיימות שורות משויכות בטבלת החלת מבצעים).\n\n"
                     f"🛠️ מה צריך לעשות?\n"
-                    f"עברי ללשונית 'החלת מבצעים על מוצרים', בחרי את המוצרים המקושרים למבצע זה, ולחצי על 'ביטול מבצע ממוצר'. "
+                    f"עברי ללשונית 'החלת מבצעים על מוצרים', בחר את המוצרים המקושרים למבצע זה, ולחצי על 'ביטול מבצע ממוצר'. "
                     f"רק לאחר שהמבצע יהיה חופשי לחלוטין ולא משויך לשום מוצר, תוכלי להסירו מהקטלוג."
                 )
             else:
@@ -519,7 +519,7 @@ def save_applies_link(modal, p_id, d_id, tree, is_edit, old_data=None):
 def edit_selected_applies(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("בחירה חובה", "אנא בחרי שורת שיוך מהטבלה לצורך עריכה.")
+        messagebox.showwarning("בחירה חובה", "אנא בחר שורת שיוך מהטבלה לצורך עריכה.")
         return
     val = tree.item(selected[0], 'values')
     
@@ -533,7 +533,7 @@ def edit_selected_applies(tree):
 def delete_applies_link(tree):
     selected = tree.selection()
     if not selected:
-        messagebox.showwarning("בחירה חובה", "אנא בחרי שורת שיוך מהטבלה לביטול המבצע.")
+        messagebox.showwarning("בחירה חובה", "אנא בחר שורת שיוך מהטבלה לביטול המבצע.")
         return
     val = tree.item(selected[0], 'values')
     d_id = val[4] 
