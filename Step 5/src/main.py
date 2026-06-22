@@ -34,6 +34,9 @@ class RamiLeviApp(ctk.CTk):
         ctk.set_appearance_mode("light")  
         ctk.set_default_color_theme("blue")
 
+        # מאזין לאירוע לחיצה על ה-X לסגירה חלקה של פייתון
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
         # -------------------------------------------------------------
         # אתחול וייצוב גלובלי של מנוע הטבלאות (ttk.Style)
         # -------------------------------------------------------------
@@ -88,7 +91,7 @@ class RamiLeviApp(ctk.CTk):
         self.create_sidebar_button("inventory", "📦   מלאי ומוצרים", lambda: self.switch_view("inventory"))
         self.create_sidebar_button("suppliers", "🚚   ספקים ורכש", lambda: self.switch_view("suppliers"))
         self.create_sidebar_button("orders", "🛒   הזמנות והפצה", lambda: self.switch_view("orders"))
-        self.create_sidebar_button("discounts", "🏷️   מבצעים והנחות", lambda: self.switch_view("discounts"))
+        self.create_sidebar_button("discounts", "🏷️  מבצעים והנחות", lambda: self.switch_view("discounts"))
 
         # פרופיל משתמש
         self.user_frame = ctk.CTkFrame(self.sidebar_frame, fg_color="#111827", corner_radius=14, height=65)
@@ -101,43 +104,32 @@ class RamiLeviApp(ctk.CTk):
         self.user_role.pack(padx=18, fill="x")
 
         # -------------------------------------------------------------
-        # 2. ✨ מנגנון גלילה אנכי קבוע, יציב ומיושר למרכז (ללא תזוזה שמאלה)
+        # 2. מנגנון גלילה אנכי
         # -------------------------------------------------------------
         self.left_container = ctk.CTkFrame(self, fg_color="#F3F4F6", corner_radius=0)
         self.left_container.pack(side="left", fill="both", expand=True)
 
-        # יצירת ה-Canvas לקבלת גלילה למעלה ולמטה
         self.canvas = Canvas(self.left_container, bg="#F3F4F6", highlightthickness=0)
-        
-        # סרגל גלילה אנכי בלבד (ממוקם בצד שמאל הקיצוני)
         self.v_scrollbar = ctk.CTkScrollbar(self.left_container, orientation="vertical", command=self.canvas.yview)
         self.v_scrollbar.pack(side="left", fill="y")
 
-        # המכולה הראשית שמחזיקה את כל המסכים
         self.views_container = ctk.CTkFrame(self.canvas, fg_color="#F3F4F6", corner_radius=0)
-        
-        # חיבור המכולה לתוך חלון ה-Canvas
         self.canvas.create_window((0, 0), window=self.views_container, anchor="nw", tags="self.views_container")
         self.canvas.configure(yscrollcommand=self.v_scrollbar.set)
         self.canvas.pack(side="left", fill="both", expand=True)
 
-        # מאזינים דינמיים לווידוא שהתוכן נמתח על כל רוחב המסך ומעדכן את גבולות הגלילה האנכית
         self.views_container.bind("<Configure>", self.update_scroll_region)
         self.canvas.bind("<Configure>", self.respond_to_canvas_resize)
 
-        # מילון לאחסון המסכים הטעונים מראש (View Caching)
         self.loaded_views = {}
         self.current_active_key = None
 
-        # טעינה ראשונית חלקה ומיידית של עמוד הבית
         self.switch_view("dashboard")
 
     def update_scroll_region(self, event=None):
-        """מעדכן את גבולות הגלילה הווירטואליים לפי גובה התוכן האמיתי בלשונית"""
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
 
     def respond_to_canvas_resize(self, event):
-        """מותח את מכולת המסכים באופן מלא וממורכז לרוחב ה-Canvas הנוכחי"""
         canvas_width = event.width
         self.canvas.itemconfig("self.views_container", width=canvas_width)
 
@@ -159,7 +151,6 @@ class RamiLeviApp(ctk.CTk):
                 btn.configure(fg_color="transparent", text_color="#94A3B8", font=("Segoe UI", 15))
 
     def switch_view(self, key):
-        """מסתירה את המסך הנוכחי ומציגה את המסך המבוקש, טוענת רק פעם אחת מהזיכרון"""
         if self.current_active_key == key:
             return  
 
@@ -167,6 +158,10 @@ class RamiLeviApp(ctk.CTk):
 
         if self.current_active_key and self.current_active_key in self.loaded_views:
             self.loaded_views[self.current_active_key].pack_forget()
+
+        # ✨ שינוי קריטי: אם זה דשבורד, נמחק את הגרסה הישנה מהזיכרון כדי שהיא תיבנה מחדש עם נתונים טריים
+        if key == "dashboard" and key in self.loaded_views:
+            del self.loaded_views[key]
 
         if key not in self.loaded_views:
             frame_view = ctk.CTkFrame(self.views_container, fg_color="#F3F4F6", corner_radius=0)
@@ -193,9 +188,21 @@ class RamiLeviApp(ctk.CTk):
         self.loaded_views[key].pack(fill="both", expand=True)
         self.current_active_key = key
         
-        # ריענון גבולות והחזרת הגלילה לראש העמוד בעת החלפת לשונית
         self.update_scroll_region()
         self.canvas.yview_moveto(0)
+
+    def on_closing(self):
+        """סגירה מוחלטת של התוכנית לשחרור מיידי של הטרמינל"""
+        try:
+            plt.close('all') # סוגר את תהליכי matplotlib מהזיכרון
+        except:
+            pass
+        try:
+            self.quit()
+            self.destroy()
+        except:
+            pass
+        os._exit(0) # חיסול סופי של כל התהליכים ברמת מערכת ההפעלה
 
 if __name__ == "__main__":
     app = RamiLeviApp()
