@@ -104,6 +104,9 @@ def show_stores_view(main_frame):
     v_scrollbar.pack(side="left", fill="y", padx=(10, 0), pady=15)
     tree.pack(side="right", fill="both", expand=True, padx=(15, 0), pady=15)
 
+    # ✨ תוספת: שיוך אירוע לחיצה כפולה לעריכת הסניף הנבחר באופן אוטומטי
+    tree.bind("<Double-1>", lambda event: edit_selected_store(tree))
+
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
     bottom_actions.pack(padx=35, fill="x", pady=(0, 30))
 
@@ -133,7 +136,6 @@ def refresh_table(tree, search_query="", search_id=""):
             """
             params = []
             
-            # ✨ תיקון קריטי: שימוש בסימן שוויון (=) ואיטום ללא %s% כדי לחפש את השם המדויק בלבד ללא תוצאות חלקיות
             if search_query:
                 query += " AND s.StoreName = %s"
                 params.append(search_query)

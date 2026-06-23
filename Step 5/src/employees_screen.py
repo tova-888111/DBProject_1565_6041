@@ -86,7 +86,6 @@ def show_employees_view(main_frame):
     tree.column("last_name", width=120, anchor="center", stretch=tk.YES)
     tree.column("status", width=110, anchor="center", stretch=tk.NO)
     tree.column("salary", width=110, anchor="center", stretch=tk.NO)
-    # ✨ תיקון: הגדלה משמעותית של עמודת התפקיד מ-200 ל-350 פיקסלים
     tree.column("role", width=350, anchor="center", stretch=tk.YES) 
     tree.column("store_id", width=90, anchor="center", stretch=tk.NO)       
     tree.column("store_name", width=280, anchor="e", stretch=tk.YES)      
@@ -99,10 +98,12 @@ def show_employees_view(main_frame):
     h_scrollbar = ttk.Scrollbar(table_container, orient="horizontal", command=tree.xview)
     tree.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
     
-    # ✨ תיקון: מיקום סרגלי הגלילה כולל הוספת הגלילה האופקית החדשה בתחתית
     v_scrollbar.grid(row=0, column=0, sticky="ns", pady=(15, 2), padx=(15, 0))
     h_scrollbar.grid(row=1, column=1, sticky="ew", padx=(0, 15), pady=(0, 15))
     tree.grid(row=0, column=1, sticky="nsew", padx=(0, 15), pady=(15, 2))
+
+    # ✨ תוספת: שיוך אירוע לחיצה כפולה לעריכת העובד הנבחר באופן אוטומטי
+    tree.bind("<Double-1>", lambda event: edit_selected_employee(tree))
 
     bottom_actions = ctk.CTkFrame(main_frame, fg_color="transparent")
     bottom_actions.pack(padx=35, fill="x", pady=(0, 30))
